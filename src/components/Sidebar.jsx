@@ -67,7 +67,7 @@ function Sidebar() {
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 md:hidden z-[99998]"
         />
       )}
 

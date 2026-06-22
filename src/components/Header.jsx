@@ -27,7 +27,7 @@ function Header() {
   };
 
   return (
-    <div className="fixed top-4 right-0 px-8 z-50 flex flex-row items-center justify-between w-full">
+    <div className="absolute top-4 right-0 px-8 z-50 flex flex-row items-center justify-between w-full">
       <p className='ml-4 md:ml-72'>Smart Office Navigation and Service Directory</p>
       <Box
         onClick={handleOpen}

@@ -8,7 +8,7 @@ function Dashboard() {
     <>
       <Header />
       <Sidebar />
-      <div className='ml-0 md:ml-72 p-6 pt-12 md:pt-32'>
+      <div className='ml-0 md:ml-72 p-6 pt-32 md:pt-24'>
         <MapHeader/>
         <Map />
       </div>
