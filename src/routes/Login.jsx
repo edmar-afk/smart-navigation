@@ -1,69 +1,53 @@
-/* eslint-disable no-unused-vars */
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import api from "../assets/api";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import mapImg from "../assets/images/map.png";
 
 function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-  });
 
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (!password) {
+      Swal.fire({
+        icon: "warning",
+        title: "Passcode Required",
+        text: "Please enter your passcode.",
+        confirmButtonColor: "#2E9B59",
+      });
+      return;
+    }
+
     setLoading(true);
 
-    try {
-      const res = await api.post("/api/login/", {
-        username: form.username,
-        password: form.password,
+    if (password === "jhcsc2026") {
+      await Swal.fire({
+        icon: "success",
+        title: "Login Successful",
+        text: "Welcome back!",
+        confirmButtonColor: "#2E9B59",
       });
 
-      const data = res.data;
-
-      localStorage.setItem("user", JSON.stringify(data));
-
-      if (data.user.is_staff === true || data.user.is_superuser === true) {
-        await Swal.fire({
-          icon: "success",
-          title: "Login Successful",
-          text: "Welcome back!",
-          confirmButtonColor: "#2563eb",
-        });
-
-        navigate("/dashboard");
-      } else {
-        await Swal.fire({
-          icon: "warning",
-          title: "Account Pending",
-          text: "You need to wait for admin's approval to access the system",
-          confirmButtonColor: "#f59e0b",
-        });
-
-        return;
-      }
-    } catch (err) {
-      Swal.fire({
+      navigate("/dashboard");
+    } else {
+      await Swal.fire({
         icon: "error",
         title: "Login Failed",
-        text: "Incorrect username or password",
+        text: "Incorrect passcode.",
         confirmButtonColor: "#dc2626",
       });
-    } finally {
-      setLoading(false);
+
+      setPassword("");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -86,27 +70,48 @@ function Login() {
             services at your fingertips!
           </p>
 
-          <form className="mx-auto mt-8 flex flex-col sm:flex-row max-w-md gap-3 sm:gap-x-4">
+          <form
+            onSubmit={handleLogin}
+            className="mx-auto mt-8 flex flex-col sm:flex-row max-w-md gap-3 sm:gap-x-4"
+          >
             <label htmlFor="passcode" className="sr-only">
               Passcode
             </label>
 
-            <input
-              id="passcode"
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full min-w-0 flex-auto rounded-md border-0 bg-white/5 px-3.5 py-2 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-white text-sm"
-              placeholder="Enter your Passcode"
-            />
+            {/* Password Input */}
+            <div className="relative w-full">
+              <input
+                id="passcode"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border-0 bg-white/5 px-3.5 py-2 pr-11 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-white text-sm placeholder:text-gray-400"
+                placeholder="Enter your Passcode"
+                disabled={loading}
+              />
 
-            <Link
-              to={"/dashboard"}
-              className="w-full sm:w-auto flex justify-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-100"
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-4 -translate-y-1/2 p-1.5 text-gray-300 hover:text-white transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <VisibilityOffIcon fontSize="small" />
+                ) : (
+                  <VisibilityIcon fontSize="small" />
+                )}
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto flex justify-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Login
-            </Link>
+              {loading ? "Logging in..." : "Login"}
+            </button>
           </form>
 
           <svg
@@ -120,7 +125,8 @@ function Login() {
               r="512"
               fill="url(#gradient)"
               fillOpacity="0.7"
-            ></circle>
+            />
+
             <defs>
               <radialGradient
                 id="gradient"
@@ -130,8 +136,12 @@ function Login() {
                 gradientUnits="userSpaceOnUse"
                 gradientTransform="translate(512 512) rotate(90) scale(512)"
               >
-                <stop stopColor="#7775D6"></stop>
-                <stop offset="1" stopColor="#7ED321" stopOpacity="0"></stop>
+                <stop stopColor="#7775D6" />
+                <stop
+                  offset="1"
+                  stopColor="#7ED321"
+                  stopOpacity="0"
+                />
               </radialGradient>
             </defs>
           </svg>
@@ -142,3 +152,4 @@ function Login() {
 }
 
 export default Login;
+
