@@ -1,51 +1,133 @@
-/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
+
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import PeopleIcon from "@mui/icons-material/People";
-import SecurityIcon from "@mui/icons-material/Security";
-import ShieldIcon from "@mui/icons-material/Shield";
-import CategoryIcon from "@mui/icons-material/Category";
-import InventoryIcon from "@mui/icons-material/Inventory";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import PaymentIcon from "@mui/icons-material/Payment";
+
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
+import HowToRegRoundedIcon from "@mui/icons-material/HowToRegRounded";
+import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
+import SwapHorizRoundedIcon from "@mui/icons-material/SwapHorizRounded";
+import PlaylistAddRoundedIcon from "@mui/icons-material/PlaylistAddRounded";
+import PersonRemoveRoundedIcon from "@mui/icons-material/PersonRemoveRounded";
+import EventBusyRoundedIcon from "@mui/icons-material/EventBusyRounded";
+import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
+import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
+
+import LocalLibraryRoundedIcon from "@mui/icons-material/LocalLibraryRounded";
+import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
+
+import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
+import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+
+import MedicalServicesRoundedIcon from "@mui/icons-material/MedicalServicesRounded";
+import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRounded";
+
 import logo from "../assets/images/logo.jpg";
 
 const navSections = [
   {
     title: null,
     items: [
-      { label: "Dashboard", href: "/", icon: DashboardIcon, active: true },
+      {
+        label: "Dashboard",
+        href: "/",
+        icon: DashboardRoundedIcon,
+        active: true,
+      },
     ],
   },
+
   {
     title: "Registrar",
     items: [
-      { label: "Service Name", href: "/", icon: PeopleIcon },
-      { label: "Service Name", href: "/", icon: SecurityIcon },
-      { label: "Service Name", href: "/", icon: ShieldIcon },
+      {
+        label: "Enrolment Process/Procedures",
+        href: "/",
+        icon: HowToRegRoundedIcon,
+      },
+      {
+        label: "Enroll Actions",
+        href: "/",
+        icon: FactCheckRoundedIcon,
+      },
+      {
+        label: "Shifting of Programs",
+        href: "/",
+        icon: SwapHorizRoundedIcon,
+      },
+      {
+        label: "Adding/Dropping/Changing of Subjects",
+        href: "/",
+        icon: PlaylistAddRoundedIcon,
+      },
+      {
+        label: "Withdrawal of Enrollment",
+        href: "/",
+        icon: PersonRemoveRoundedIcon,
+      },
+      {
+        label: "Filing of LOA (Leave of Absence)",
+        href: "/",
+        icon: EventBusyRoundedIcon,
+      },
+      {
+        label: "Evaluation of Graduating Students",
+        href: "/",
+        icon: SchoolRoundedIcon,
+      },
+      {
+        label: "Releasing of TOR",
+        href: "/",
+        icon: DescriptionRoundedIcon,
+      },
     ],
   },
+
   {
     title: "Library",
     items: [
-      { label: "Service Name", href: "/", icon: CategoryIcon },
-      { label: "Service Name", href: "/", icon: InventoryIcon },
+      {
+        label: "Library Services",
+        href: "/",
+        icon: LocalLibraryRoundedIcon,
+      },
+      {
+        label: "Books & Resources",
+        href: "/",
+        icon: MenuBookRoundedIcon,
+      },
     ],
   },
+
   {
     title: "DSA",
     items: [
-      { label: "Service Name", href: "#", icon: ShoppingCartIcon },
-      { label: "Service Name", href: "#", icon: PaymentIcon },
+      {
+        label: "Student Assistance",
+        href: "#",
+        icon: SupportAgentRoundedIcon,
+      },
+      {
+        label: "DSA Services",
+        href: "#",
+        icon: AssignmentRoundedIcon,
+      },
     ],
   },
+
   {
     title: "School Clinic",
     items: [
-      { label: "Service Name", href: "#", icon: ShoppingCartIcon },
-      { label: "Service Name", href: "#", icon: PaymentIcon },
+      {
+        label: "Medical Services",
+        href: "#",
+        icon: MedicalServicesRoundedIcon,
+      },
+      {
+        label: "Health & Wellness",
+        href: "#",
+        icon: HealthAndSafetyRoundedIcon,
+      },
     ],
   },
 ];
@@ -55,90 +137,336 @@ function Sidebar() {
 
   return (
     <>
-      {/* Hamburger (mobile only) */}
+      {/* =========================
+          MOBILE MENU BUTTON
+      ========================== */}
       <button
         onClick={() => setOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-green-800 text-white rounded"
+        className="
+          md:hidden fixed top-4 left-4 z-[99999]
+          flex items-center justify-center
+          w-11 h-11
+          rounded-xl
+          bg-green-700
+          text-white
+          shadow-lg
+          hover:bg-green-800
+          active:scale-95
+          transition-all
+        "
+        aria-label="Open menu"
       >
         <MenuIcon />
       </button>
 
-      {/* Overlay */}
+      {/* =========================
+          MOBILE OVERLAY
+      ========================== */}
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="fixed inset-0 bg-black/40 md:hidden z-[99998]"
+          className="
+            fixed inset-0
+            bg-black/40
+            backdrop-blur-[2px]
+            md:hidden
+            z-[99998]
+          "
         />
       )}
 
-      {/* Sidebar */}
+      {/* =========================
+          SIDEBAR
+      ========================== */}
       <aside
         className={`
-          fixed top-0 left-0 z-[99999] h-screen w-64 bg-white pl-6 pr-4
-          transform transition-transform duration-300
+          fixed top-0 left-0
+          z-[99999]
+          h-screen
+          w-[280px]
+
+          bg-white
+
+          border-r border-green-100
+
+          shadow-[4px_0_24px_rgba(0,0,0,0.05)]
+
+          transform
+          transition-transform
+          duration-300
+          ease-out
+
           ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
-        {/* Close button (mobile) */}
+        {/* =========================
+            MOBILE CLOSE BUTTON
+        ========================== */}
         <button
           onClick={() => setOpen(false)}
-          className="md:hidden absolute top-4 right-4"
+          className="
+            md:hidden
+            absolute
+            top-5
+            right-5
+
+            flex
+            items-center
+            justify-center
+
+            w-9
+            h-9
+
+            rounded-lg
+
+            text-gray-500
+
+            hover:bg-green-50
+            hover:text-green-700
+
+            transition
+          "
+          aria-label="Close menu"
         >
-          <CloseIcon />
+          <CloseIcon fontSize="small" />
         </button>
 
-        {/* Header */}
-        <div className="py-4 flex flex-col items-center gap-2 mb-4">
-          <img
-            src={logo}
-            alt="Logo"
-            className="mx-auto h-14 w-14 rounded-full"
-          />
-          <p className="text-xs font-light">
-            JHCSC Canuto Campus
-          </p>
+        {/* =========================
+            HEADER / BRAND
+        ========================== */}
+        <div className="px-6 pt-7 pb-5">
+          <div
+            className="
+              flex
+              items-center
+              gap-3
+
+              pb-5
+
+              border-b
+              border-green-100
+            "
+          >
+            {/* Logo */}
+            <div
+              className="
+                relative
+                flex
+                items-center
+                justify-center
+
+                w-12
+                h-12
+
+                rounded-2xl
+
+                bg-green-50
+
+                ring-1
+                ring-green-100
+
+                overflow-hidden
+              "
+            >
+              <img
+                src={logo}
+                alt="JHCSC Logo"
+                className="
+                  w-full
+                  h-full
+                  object-cover
+                "
+              />
+            </div>
+
+            {/* Brand */}
+            <div className="min-w-0">
+              <p
+                className="
+                  text-sm
+                  font-bold
+                  text-gray-800
+                  leading-tight
+                "
+              >
+                JHCSC
+              </p>
+
+              <p
+                className="
+                  mt-1
+                  text-[11px]
+                  text-gray-500
+                  leading-tight
+                "
+              >
+                Canuto Campus
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Scrollable nav */}
-        <nav className="h-[calc(100vh-120px)] overflow-y-auto pr-2 sidebar-scroll z-50">
-          <ul className="flex flex-col mb-24">
-            {navSections.map((section, si) => (
-              <div key={si}>
+        {/* =========================
+            NAVIGATION
+        ========================== */}
+        <nav
+          className="
+            h-[calc(100vh-115px)]
+            overflow-y-auto
+            px-4
+            pb-10
+            sidebar-scroll
+          "
+        >
+          <ul className="space-y-5">
+            {navSections.map((section, sectionIndex) => (
+              <li key={sectionIndex}>
+                {/* Section title */}
                 {section.title && (
-                  <li className="px-2 py-2 text-xs uppercase tracking-wider text-green-800 font-extrabold">
-                    {section.title}
-                  </li>
+                  <div className="px-3 mb-2">
+                    <p
+                      className="
+                        text-[10px]
+                        font-bold
+                        uppercase
+                        tracking-[0.14em]
+                        text-green-700
+                      "
+                    >
+                      {section.title}
+                    </p>
+                  </div>
                 )}
 
-                {section.items.map((item, i) => {
-                  const Icon = item.icon;
+                {/* Section items */}
+                <ul className="space-y-1">
+                  {section.items.map((item, itemIndex) => {
+                    const Icon = item.icon;
 
-                  return (
-                    <li key={i}>
-                      <a
-                        href={item.href}
-                        className={`flex items-center px-3 py-3 rounded-md text-gray-700 hover:bg-green-700 hover:text-white ${
-                          item.active ? "bg-green-900 text-white" : ""
-                        }`}
-                      >
-                        <Icon className="w-5 mr-3" />
-                        {item.label}
-                      </a>
-                    </li>
-                  );
-                })}
-              </div>
+                    return (
+                      <li key={itemIndex}>
+                        <a
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className={`
+                            group
+
+                            relative
+
+                            flex
+                            items-center
+
+                            min-h-[46px]
+
+                            px-3
+                            py-2
+
+                            rounded-xl
+
+                            text-[13px]
+                            font-medium
+
+                            transition-all
+                            duration-200
+
+                            ${
+                              item.active
+                                ? `
+                                  bg-green-700
+                                  text-white
+                                  shadow-md
+                                  shadow-green-700/20
+                                `
+                                : `
+                                  text-gray-600
+                                  hover:bg-green-50
+                                  hover:text-green-800
+                                `
+                            }
+                          `}
+                        >
+                          {/* Active indicator */}
+                          {item.active && (
+                            <span
+                              className="
+                                absolute
+                                left-0
+                                top-1/2
+                                -translate-y-1/2
+
+                                w-1
+                                h-6
+
+                                rounded-r-full
+
+                                bg-green-300
+                              "
+                            />
+                          )}
+
+                          {/* Icon container */}
+                          <span
+                            className={`
+                              flex
+                              items-center
+                              justify-center
+
+                              flex-shrink-0
+
+                              w-9
+                              h-9
+
+                              rounded-lg
+
+                              transition-all
+
+                              ${
+                                item.active
+                                  ? "bg-white/15 text-white"
+                                  : `
+                                    bg-green-50
+                                    text-green-700
+                                    group-hover:bg-green-100
+                                  `
+                              }
+                            `}
+                          >
+                            <Icon
+                              sx={{
+                                fontSize: 21,
+                              }}
+                            />
+                          </span>
+
+                          {/* Label */}
+                          <span
+                            className="
+                              ml-3
+                              leading-[1.25]
+                            "
+                          >
+                            {item.label}
+                          </span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
             ))}
           </ul>
         </nav>
       </aside>
 
-      {/* Scrollbar hide CSS */}
+      {/* =========================
+          HIDDEN SCROLLBAR
+      ========================== */}
       <style>{`
         .sidebar-scroll::-webkit-scrollbar {
           width: 0px;
           height: 0px;
         }
+
         .sidebar-scroll {
           scrollbar-width: none;
           -ms-overflow-style: none;
