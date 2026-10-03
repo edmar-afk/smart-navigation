@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
 
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -30,9 +31,8 @@ const navSections = [
     items: [
       {
         label: "Dashboard",
-        href: "/",
+        href: "/dashboard",
         icon: DashboardRoundedIcon,
-        active: true,
       },
     ],
   },
@@ -42,7 +42,7 @@ const navSections = [
     items: [
       {
         label: "Enrolment Process/Procedures",
-        href: "/",
+        href: "/enrollment-process",
         icon: HowToRegRoundedIcon,
       },
       {
@@ -104,12 +104,12 @@ const navSections = [
     items: [
       {
         label: "Student Assistance",
-        href: "#",
+        href: "/",
         icon: SupportAgentRoundedIcon,
       },
       {
         label: "DSA Services",
-        href: "#",
+        href: "/",
         icon: AssignmentRoundedIcon,
       },
     ],
@@ -120,12 +120,12 @@ const navSections = [
     items: [
       {
         label: "Medical Services",
-        href: "#",
+        href: "/",
         icon: MedicalServicesRoundedIcon,
       },
       {
         label: "Health & Wellness",
-        href: "#",
+        href: "/",
         icon: HealthAndSafetyRoundedIcon,
       },
     ],
@@ -345,12 +345,11 @@ function Sidebar() {
 
                     return (
                       <li key={itemIndex}>
-                        <a
-                          href={item.href}
+                        <NavLink
+                          to={item.href}
                           onClick={() => setOpen(false)}
-                          className={`
+                          className={({ isActive }) => `
                             group
-
                             relative
 
                             flex
@@ -370,7 +369,7 @@ function Sidebar() {
                             duration-200
 
                             ${
-                              item.active
+                              isActive
                                 ? `
                                   bg-green-700
                                   text-white
@@ -385,69 +384,73 @@ function Sidebar() {
                             }
                           `}
                         >
-                          {/* Active indicator */}
-                          {item.active && (
-                            <span
-                              className="
-                                absolute
-                                left-0
-                                top-1/2
-                                -translate-y-1/2
+                          {({ isActive }) => (
+                            <>
+                              {/* Active indicator */}
+                              {isActive && (
+                                <span
+                                  className="
+                                    absolute
+                                    left-0
+                                    top-1/2
+                                    -translate-y-1/2
 
-                                w-1
-                                h-6
+                                    w-1
+                                    h-6
 
-                                rounded-r-full
+                                    rounded-r-full
 
-                                bg-green-300
-                              "
-                            />
+                                    bg-green-300
+                                  "
+                                />
+                              )}
+
+                              {/* Icon container */}
+                              <span
+                                className={`
+                                  flex
+                                  items-center
+                                  justify-center
+
+                                  flex-shrink-0
+
+                                  w-9
+                                  h-9
+
+                                  rounded-lg
+
+                                  transition-all
+
+                                  ${
+                                    isActive
+                                      ? "bg-white/15 text-white"
+                                      : `
+                                        bg-green-50
+                                        text-green-700
+                                        group-hover:bg-green-100
+                                      `
+                                  }
+                                `}
+                              >
+                                <Icon
+                                  sx={{
+                                    fontSize: 21,
+                                  }}
+                                />
+                              </span>
+
+                              {/* Label */}
+                              <span
+                                className="
+                                  ml-3
+                                  leading-[1.25]
+                                "
+                              >
+                                {item.label}
+                              </span>
+                            </>
                           )}
-
-                          {/* Icon container */}
-                          <span
-                            className={`
-                              flex
-                              items-center
-                              justify-center
-
-                              flex-shrink-0
-
-                              w-9
-                              h-9
-
-                              rounded-lg
-
-                              transition-all
-
-                              ${
-                                item.active
-                                  ? "bg-white/15 text-white"
-                                  : `
-                                    bg-green-50
-                                    text-green-700
-                                    group-hover:bg-green-100
-                                  `
-                              }
-                            `}
-                          >
-                            <Icon
-                              sx={{
-                                fontSize: 21,
-                              }}
-                            />
-                          </span>
-
-                          {/* Label */}
-                          <span
-                            className="
-                              ml-3
-                              leading-[1.25]
-                            "
-                          >
-                            {item.label}
-                          </span>
-                        </a>
+                        </NavLink>
                       </li>
                     );
                   })}
@@ -477,3 +480,4 @@ function Sidebar() {
 }
 
 export default Sidebar;
+
