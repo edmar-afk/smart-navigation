@@ -52,7 +52,7 @@ const navSections = [
       },
       {
         label: "Shifting of Programs",
-        href: "/",
+        href: "/shifting-programs",
         icon: SwapHorizRoundedIcon,
       },
       {
