@@ -46,39 +46,34 @@ const navSections = [
         icon: HowToRegRoundedIcon,
       },
       {
-        label: "Enroll Actions",
-        href: "/",
-        icon: FactCheckRoundedIcon,
-      },
-      {
         label: "Shifting of Programs",
         href: "/shifting-programs",
         icon: SwapHorizRoundedIcon,
       },
       {
         label: "Adding/Dropping/Changing of Subjects",
-        href: "/",
+        href: "/adding-droping-changing-subjects",
         icon: PlaylistAddRoundedIcon,
       },
       {
         label: "Withdrawal of Enrollment",
-        href: "/",
+        href: "/withdrawal-of-enrollment",
         icon: PersonRemoveRoundedIcon,
       },
       {
+        label: "Releasing of TOR",
+        href: "/releasing-TOR",
+        icon: DescriptionRoundedIcon,
+      },
+      {
         label: "Filing of LOA (Leave of Absence)",
-        href: "/",
+        href: "/dashboard",
         icon: EventBusyRoundedIcon,
       },
       {
         label: "Evaluation of Graduating Students",
-        href: "/",
+        href: "/dashboard",
         icon: SchoolRoundedIcon,
-      },
-      {
-        label: "Releasing of TOR",
-        href: "/",
-        icon: DescriptionRoundedIcon,
       },
     ],
   },
@@ -88,12 +83,12 @@ const navSections = [
     items: [
       {
         label: "Library Services",
-        href: "/",
+        href: "/dashboard",
         icon: LocalLibraryRoundedIcon,
       },
       {
         label: "Books & Resources",
-        href: "/",
+        href: "/dashboard",
         icon: MenuBookRoundedIcon,
       },
     ],
@@ -104,12 +99,12 @@ const navSections = [
     items: [
       {
         label: "Student Assistance",
-        href: "/",
+        href: "/dashboard",
         icon: SupportAgentRoundedIcon,
       },
       {
         label: "DSA Services",
-        href: "/",
+        href: "/dashboard",
         icon: AssignmentRoundedIcon,
       },
     ],
@@ -120,12 +115,12 @@ const navSections = [
     items: [
       {
         label: "Medical Services",
-        href: "/",
+        href: "/dashboard",
         icon: MedicalServicesRoundedIcon,
       },
       {
         label: "Health & Wellness",
-        href: "/",
+        href: "/dashboard",
         icon: HealthAndSafetyRoundedIcon,
       },
     ],
@@ -480,4 +475,3 @@ function Sidebar() {
 }
 
 export default Sidebar;
-
