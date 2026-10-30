@@ -481,13 +481,6 @@ function EnrollmentProcess() {
                               step.
                             </p>
 
-                            {index < enrollmentSteps.length - 1 && (
-                              <div className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#2E9B59]">
-                                Next step
-                                <ArrowRight size={14} />
-                              </div>
-                            )}
-
                             {index === enrollmentSteps.length - 1 && (
                               <div className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#2E9B59]">
                                 Enrollment completed
