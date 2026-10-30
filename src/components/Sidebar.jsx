@@ -68,12 +68,12 @@ const navSections = [
       },
       {
         label: "Filing of LOA (Leave of Absence)",
-        href: "/dashboard",
+        href: "/loa",
         icon: EventBusyRoundedIcon,
       },
       {
         label: "Evaluation of Graduating Students",
-        href: "/dashboard",
+        href: "/evaluation",
         icon: SchoolRoundedIcon,
       },
     ],
@@ -84,12 +84,12 @@ const navSections = [
     items: [
       {
         label: "Library Services",
-        href: "/dashboard",
+        href: "/library-services",
         icon: LocalLibraryRoundedIcon,
       },
       {
         label: "Books & Resources",
-        href: "/dashboard",
+        href: "/books-and-resources",
         icon: MenuBookRoundedIcon,
       },
     ],
@@ -100,12 +100,12 @@ const navSections = [
     items: [
       {
         label: "Student Assistance",
-        href: "/dashboard",
+        href: "/student-assistance",
         icon: SupportAgentRoundedIcon,
       },
       {
         label: "DSA Services",
-        href: "/dashboard",
+        href: "/dsa-services",
         icon: AssignmentRoundedIcon,
       },
     ],
@@ -116,12 +116,12 @@ const navSections = [
     items: [
       {
         label: "Medical Services",
-        href: "/dashboard",
+        href: "/medical-services",
         icon: MedicalServicesRoundedIcon,
       },
       {
         label: "Health & Wellness",
-        href: "/dashboard",
+        href: "/health-and-wellness",
         icon: HealthAndSafetyRoundedIcon,
       },
     ],

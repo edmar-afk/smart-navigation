@@ -7,6 +7,7 @@ import ShiftingPrograms from "./components/sideBarContent/registrar/ShiftingProg
 import ReleasingTOR from "./components/sideBarContent/registrar/ReleasingTOR";
 import AddingDroppingChangingSubject from "./components/sideBarContent/registrar/AddingDroppingChangingSubject";
 import WithdrawalOfEnrollment from "./components/sideBarContent/registrar/WithdrawalOfEnrollment";
+import NotFound from "./routes/NotFound";
 function Logout() {
   localStorage.clear();
   return <Navigate to="/" />;
@@ -26,6 +27,7 @@ function App() {
         <Route path="/releasing-TOR" element={<ReleasingTOR />} />
         <Route path="/adding-droping-changing-subjects" element={<AddingDroppingChangingSubject/>} />
         <Route path="/withdrawal-of-enrollment" element={<WithdrawalOfEnrollment/>} />
+        <Route path="*" element={<NotFound/>} />
       </Routes>
     </BrowserRouter>
   );
