@@ -25,6 +25,7 @@ import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRound
 
 import logo from "../assets/images/logo.jpg";
 
+
 const navSections = [
   {
     title: null,
