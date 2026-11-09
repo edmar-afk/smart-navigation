@@ -1,12 +1,33 @@
-/* eslint-disable no-unused-vars */
 import React, { useRef, useState } from "react";
+import { Eye } from "lucide-react";
+
+// ============================================================
+// MAP IMAGES
+// ============================================================
 
 import mapImg from "../../assets/images/map.png";
 import registrarMap from "../../assets/images/registrarMap.png";
 import libraryMap from "../../assets/images/libraryMap.png";
 import clinicMap from "../../assets/images/clinicMap.png";
+import bit from "../../assets/images/bit.png";
+import cadlab from "../../assets/images/cadlab.png";
+import canteenMap from "../../assets/images/canteen.png";
+import ch3 from "../../assets/images/ch3.png";
+import ch4567 from "../../assets/images/ch4567.png";
+import disaster from "../../assets/images/disaster.png";
+import drawingRoom from "../../assets/images/drawingRoom.png";
+import facultyRoom from "../../assets/images/facultyRoom.png";
+import guidance from "../../assets/images/guidance.png";
+import hrod from "../../assets/images/hrod.png";
+import lab1 from "../../assets/images/lab1.png";
+import lab2 from "../../assets/images/lab2.png";
+import mis from "../../assets/images/mis.png";
+import qaoMap from "../../assets/images/qao.png";
 
-// Map location images
+// ============================================================
+// LOCATION IMAGES
+// ============================================================
+
 import canteen from "../../assets/images/paths/canteen.jpg";
 import adminssionScholar from "../../assets/images/paths/admission-scholar.jpg";
 import BitProgramChair from "../../assets/images/paths/bit-program-chair.jpg";
@@ -18,7 +39,200 @@ import qao from "../../assets/images/paths/qao.jpg";
 import registrar from "../../assets/images/paths/registrar.jpg";
 import researchExtension from "../../assets/images/paths/research-extension.jpg";
 import schoolClinic from "../../assets/images/paths/school-clinic.jpg";
-import { Eye } from "lucide-react";
+
+// ============================================================
+// MAP CONFIGURATION
+// ============================================================
+
+const maps = {
+  default: mapImg,
+  clinic: clinicMap,
+  registrar: registrarMap,
+  library: libraryMap,
+  bit: bit,
+  cadlab: cadlab,
+  canteen: canteenMap,
+  ch3: ch3,
+  ch4567: ch4567,
+  disaster: disaster,
+  drawingRoom: drawingRoom,
+  facultyRoom: facultyRoom,
+  guidance: guidance,
+  hrod: hrod,
+  lab1: lab1,
+  lab2: lab2,
+  mis: mis,
+  qao: qaoMap,
+};
+
+const mapLabels = {
+  default: "Office Map",
+  clinic: "Clinic Path",
+  registrar: "Registrar Path",
+  library: "Library Path",
+  bit: "BIT Building",
+  cadlab: "CAD Laboratory",
+  canteen: "Canteen",
+  ch3: "CH 3",
+  ch4567: "CH 4, 5, 6 and 7",
+  disaster: "Disaster Risk Reduction",
+  drawingRoom: "Drawing Room",
+  facultyRoom: "Faculty Room",
+  guidance: "Guidance Office",
+  hrod: "Human Resource Office",
+  lab1: "Laboratory 1",
+  lab2: "Laboratory 2",
+  mis: "MIS Office",
+  qao: "Quality Assurance Office",
+};
+
+// ============================================================
+// SHARED MARKERS
+// These markers appear on ALL maps.
+// ============================================================
+
+const sharedMarkers = [
+  {
+    id: 1,
+    name: "Canteen",
+    image: canteen,
+    x: 26.5,
+    y: 73.5,
+    width: 80,
+    height: 60,
+  },
+  {
+    id: 2,
+    name: "Admission and Scholarship",
+    image: adminssionScholar,
+    x: 23.8,
+    y: 51,
+    width: 50,
+    height: 120,
+  },
+  {
+    id: 3,
+    name: "BIT Program Chair",
+    image: BitProgramChair,
+    x: 80.5,
+    y: 19,
+    width: 78,
+    height: 100,
+  },
+  {
+    id: 4,
+    name: "Cashiering",
+    image: cashiering,
+    x: 13.6,
+    y: 51,
+    width: 50,
+    height: 120,
+  },
+  {
+    id: 5,
+    name: "Faculty Room",
+    image: facultyroom,
+    x: 69.7,
+    y: 19,
+    width: 80,
+    height: 100,
+  },
+  {
+    id: 6,
+    name: "Library",
+    image: library,
+    x: 44,
+    y: 51,
+    width: 50,
+    height: 120,
+  },
+  {
+    id: 7,
+    name: "MIS Office",
+    image: misOffice,
+    x: 30.5,
+    y: 51,
+    width: 50,
+    height: 120,
+  },
+  {
+    id: 8,
+    name: "Quality Assurance Office",
+    image: qao,
+    x: 60.5,
+    y: 19.5,
+    width: 70,
+    height: 78,
+  },
+  {
+    id: 9,
+    name: "Registrar",
+    image: registrar,
+    x: 20.4,
+    y: 51,
+    width: 50,
+    height: 120,
+  },
+  {
+    id: 10,
+    name: "Research and Extension",
+    image: researchExtension,
+    x: 16,
+    y: 71.5,
+    width: 100,
+    height: 90,
+  },
+  {
+    id: 11,
+    name: "School Clinic",
+    image: schoolClinic,
+    x: 17,
+    y: 51,
+    width: 50,
+    height: 120,
+  },
+];
+
+// ============================================================
+// CUSTOM MARKERS
+// Only add markers here when a map needs additional locations.
+// These are combined with the shared markers automatically.
+// ============================================================
+
+const customMarkers = {
+  default: [],
+
+  clinic: [
+    // Add clinic-specific markers here.
+  ],
+
+  registrar: [
+    // Add registrar-specific markers here.
+  ],
+
+  library: [
+    // Add library-specific markers here.
+  ],
+
+  bit: [],
+  cadlab: [],
+  canteen: [],
+  ch3: [],
+  ch4567: [],
+  disaster: [],
+  drawingRoom: [],
+  facultyRoom: [],
+  guidance: [],
+  hrod: [],
+  lab1: [],
+  lab2: [],
+  mis: [],
+  qao: [],
+};
+
+// ============================================================
+// MAP COMPONENT
+// ============================================================
 
 function Map() {
   const containerRef = useRef(null);
@@ -38,447 +252,13 @@ function Map() {
   const step = 0.1;
 
   // ============================================================
-  // MAP IMAGES
+  // GET MARKERS FOR SELECTED MAP
   // ============================================================
 
-  const maps = {
-    default: mapImg,
-    clinic: clinicMap,
-    registrar: registrarMap,
-    library: libraryMap,
-  };
-
-  const mapLabels = {
-    default: "Office Map",
-    clinic: "Clinic Path",
-    registrar: "Registrar Path",
-    library: "Library Path",
-  };
-
-  // ============================================================
-  // MAP IMAGE MARKERS
-  // ============================================================
-  // x = horizontal position (%)
-  // y = vertical position (%)
-  //
-  // Adjust x and y to position each button on your map.
-  //
-  // 0%   = left / top
-  // 50%  = center
-  // 100% = right / bottom
-  //
-  // Each marker opens its corresponding image.
-  // ============================================================
-
-  const mapMarkers = {
-    default: [
-      {
-        id: 1,
-        name: "Canteen",
-        image: canteen,
-        x: 26.5,
-        y: 73.5,
-        width: 80,
-        height: 60,
-      },
-      {
-        id: 2,
-        name: "Admission and Scholarship",
-        image: adminssionScholar,
-        x: 23.8,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 3,
-        name: "BIT Program Chair",
-        image: BitProgramChair,
-        x: 80.5,
-        y: 19,
-        width: 78,
-        height: 100,
-      },
-      {
-        id: 4,
-        name: "Cashiering",
-        image: cashiering,
-        x: 13.6,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 5,
-        name: "Faculty Room",
-        image: facultyroom,
-        x: 69.7,
-        y: 19,
-        width: 80,
-        height: 100,
-      },
-      {
-        id: 6,
-        name: "Library",
-        image: library,
-        x: 44,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 7,
-        name: "MIS Office",
-        image: misOffice,
-        x: 30.5,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 8,
-        name: "Quality Assurance Office",
-        image: qao,
-        x: 60.5,
-        y: 19.5,
-        width: 70,
-        height: 78,
-      },
-      {
-        id: 9,
-        name: "Registrar",
-        image: registrar,
-        x: 20.4,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 10,
-        name: "Research and Extension",
-        image: researchExtension,
-        x: 16,
-        y: 71.5,
-        width: 100,
-        height: 90,
-      },
-      {
-        id: 11,
-        name: "School Clinic",
-        image: schoolClinic,
-        x: 17,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-    ],
-
-    clinic: [
-      {
-        id: 1,
-        name: "Canteen",
-        image: canteen,
-        x: 26.5,
-        y: 73.5,
-        width: 80,
-        height: 60,
-      },
-      {
-        id: 2,
-        name: "Admission and Scholarship",
-        image: adminssionScholar,
-        x: 23.8,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 3,
-        name: "BIT Program Chair",
-        image: BitProgramChair,
-        x: 80.5,
-        y: 19,
-        width: 78,
-        height: 100,
-      },
-      {
-        id: 4,
-        name: "Cashiering",
-        image: cashiering,
-        x: 13.6,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 5,
-        name: "Faculty Room",
-        image: facultyroom,
-        x: 69.7,
-        y: 19,
-        width: 80,
-        height: 100,
-      },
-      {
-        id: 6,
-        name: "Library",
-        image: library,
-        x: 44,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 7,
-        name: "MIS Office",
-        image: misOffice,
-        x: 30.5,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 8,
-        name: "Quality Assurance Office",
-        image: qao,
-        x: 60.5,
-        y: 19.5,
-        width: 70,
-        height: 78,
-      },
-      {
-        id: 9,
-        name: "Registrar",
-        image: registrar,
-        x: 20.4,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 10,
-        name: "Research and Extension",
-        image: researchExtension,
-        x: 16,
-        y: 71.5,
-        width: 100,
-        height: 90,
-      },
-      {
-        id: 11,
-        name: "School Clinic",
-        image: schoolClinic,
-        x: 17,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-    ],
-
-    registrar: [
-      {
-        id: 1,
-        name: "Canteen",
-        image: canteen,
-        x: 26.5,
-        y: 73.5,
-        width: 80,
-        height: 60,
-      },
-      {
-        id: 2,
-        name: "Admission and Scholarship",
-        image: adminssionScholar,
-        x: 23.8,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 3,
-        name: "BIT Program Chair",
-        image: BitProgramChair,
-        x: 80.5,
-        y: 19,
-        width: 78,
-        height: 100,
-      },
-      {
-        id: 4,
-        name: "Cashiering",
-        image: cashiering,
-        x: 13.6,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 5,
-        name: "Faculty Room",
-        image: facultyroom,
-        x: 69.7,
-        y: 19,
-        width: 80,
-        height: 100,
-      },
-      {
-        id: 6,
-        name: "Library",
-        image: library,
-        x: 44,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 7,
-        name: "MIS Office",
-        image: misOffice,
-        x: 30.5,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 8,
-        name: "Quality Assurance Office",
-        image: qao,
-        x: 60.5,
-        y: 19.5,
-        width: 70,
-        height: 78,
-      },
-      {
-        id: 9,
-        name: "Registrar",
-        image: registrar,
-        x: 20.4,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 10,
-        name: "Research and Extension",
-        image: researchExtension,
-        x: 16,
-        y: 71.5,
-        width: 100,
-        height: 90,
-      },
-      {
-        id: 11,
-        name: "School Clinic",
-        image: schoolClinic,
-        x: 17,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-    ],
-
-    library: [
-      {
-        id: 1,
-        name: "Canteen",
-        image: canteen,
-        x: 26.5,
-        y: 73.5,
-        width: 80,
-        height: 60,
-      },
-      {
-        id: 2,
-        name: "Admission and Scholarship",
-        image: adminssionScholar,
-        x: 23.8,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 3,
-        name: "BIT Program Chair",
-        image: BitProgramChair,
-        x: 80.5,
-        y: 19,
-        width: 78,
-        height: 100,
-      },
-      {
-        id: 4,
-        name: "Cashiering",
-        image: cashiering,
-        x: 13.6,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 5,
-        name: "Faculty Room",
-        image: facultyroom,
-        x: 69.7,
-        y: 19,
-        width: 80,
-        height: 100,
-      },
-      {
-        id: 6,
-        name: "Library",
-        image: library,
-        x: 44,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 7,
-        name: "MIS Office",
-        image: misOffice,
-        x: 30.5,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 8,
-        name: "Quality Assurance Office",
-        image: qao,
-        x: 60.5,
-        y: 19.5,
-        width: 70,
-        height: 78,
-      },
-      {
-        id: 9,
-        name: "Registrar",
-        image: registrar,
-        x: 20.4,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-      {
-        id: 10,
-        name: "Research and Extension",
-        image: researchExtension,
-        x: 16,
-        y: 71.5,
-        width: 100,
-        height: 90,
-      },
-      {
-        id: 11,
-        name: "School Clinic",
-        image: schoolClinic,
-        x: 17,
-        y: 51,
-        width: 50,
-        height: 120,
-      },
-    ],
-  };
+  const currentMarkers = [
+    ...sharedMarkers,
+    ...(customMarkers[selectedPath] || []),
+  ];
 
   // ============================================================
   // ZOOM
@@ -492,10 +272,15 @@ function Map() {
     setScale((prev) => Math.max(prev - step, minScale));
   };
 
+  // ============================================================
+  // SELECT MAP PATH
+  // ============================================================
+
   const selectPath = (path) => {
     setSelectedPath(path);
     setScale(1);
     setActiveImage(null);
+    isDown.current = false;
 
     if (containerRef.current) {
       containerRef.current.scrollTo({
@@ -511,8 +296,10 @@ function Map() {
   // ============================================================
 
   const onPointerDown = (e) => {
-    // Do not drag when clicking a map marker.
+    // Do not drag when clicking a marker.
     if (e.target.closest(".map-marker")) return;
+
+    if (e.button !== 0) return;
 
     isDown.current = true;
 
@@ -555,7 +342,9 @@ function Map() {
 
   return (
     <div className="w-full relative space-y-4">
-      {/* PATH SELECTION */}
+      {/* ====================================================== */}
+      {/* MAP SELECTION BUTTONS */}
+      {/* ====================================================== */}
 
       <div className="flex flex-wrap gap-2">
         {Object.keys(maps).map((path) => (
@@ -568,12 +357,14 @@ function Map() {
                 : "bg-white text-gray-700 border hover:bg-blue-50"
             }`}
           >
-            {path === "default" ? "Full Map" : `${mapLabels[path]}`}
+            {path === "default" ? "Full Map" : mapLabels[path]}
           </button>
         ))}
       </div>
 
+      {/* ====================================================== */}
       {/* MAP CONTAINER */}
+      {/* ====================================================== */}
 
       <div
         ref={containerRef}
@@ -595,7 +386,6 @@ function Map() {
         onPointerCancel={onPointerUp}
       >
         {/* MAP WRAPPER */}
-        {/* All markers are positioned relative to this wrapper. */}
 
         <div
           className="relative w-[1500px] max-w-none"
@@ -614,16 +404,31 @@ function Map() {
           />
 
           {/* ================================================== */}
-          {/* ABSOLUTE POSITIONED IMAGE MARKERS */}
+          {/* MAP MARKERS */}
           {/* ================================================== */}
 
-          {(mapMarkers[selectedPath] || []).map((marker) => (
+          {currentMarkers.map((marker) => (
             <button
-              key={marker.id}
-              className="map-marker absolute z-20 flex items-center justify-center
-    bg-white/10 border border-transparent rounded-md
-    hover:bg-white/80 hover:border-blue-500
-    transition-all duration-200 cursor-pointer group"
+              key={`${selectedPath}-${marker.id}-${marker.name}`}
+              type="button"
+              className="
+                map-marker
+                absolute
+                z-20
+                flex
+                items-center
+                justify-center
+                bg-white/10
+                border
+                border-transparent
+                rounded-md
+                hover:bg-white/80
+                hover:border-blue-500
+                transition-all
+                duration-200
+                cursor-pointer
+                group
+              "
               style={{
                 left: `${marker.x}%`,
                 top: `${marker.y}%`,
@@ -638,34 +443,76 @@ function Map() {
               <Eye
                 size={22}
                 strokeWidth={2.5}
-                className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="
+                  text-blue-600
+                  opacity-0
+                  group-hover:opacity-100
+                  transition-opacity
+                  duration-200
+                "
               />
             </button>
           ))}
         </div>
       </div>
 
+      {/* ====================================================== */}
       {/* ZOOM CONTROLS */}
+      {/* ====================================================== */}
 
       <div className="absolute top-[75px] right-4 flex flex-col gap-2 z-50">
         <button
+          type="button"
           onClick={zoomIn}
-          className="bg-white shadow px-3 py-1 rounded-lg text-lg font-bold hover:bg-gray-100"
+          className="
+            bg-white
+            shadow
+            px-3
+            py-1
+            rounded-lg
+            text-lg
+            font-bold
+            hover:bg-gray-100
+          "
         >
           +
         </button>
 
         <button
+          type="button"
           onClick={zoomOut}
-          className="bg-white shadow px-3 py-1 rounded-lg text-lg font-bold hover:bg-gray-100"
+          className="
+            bg-white
+            shadow
+            px-3
+            py-1
+            rounded-lg
+            text-lg
+            font-bold
+            hover:bg-gray-100
+          "
         >
           −
         </button>
       </div>
 
+      {/* ====================================================== */}
       {/* MAP LABEL */}
+      {/* ====================================================== */}
 
-      <div className="absolute bottom-4 left-4 bg-white p-2 rounded-lg shadow z-30 pointer-events-none">
+      <div
+        className="
+          absolute
+          bottom-4
+          left-4
+          bg-white
+          p-2
+          rounded-lg
+          shadow
+          z-30
+          pointer-events-none
+        "
+      >
         <p className="text-sm font-medium">{mapLabels[selectedPath]}</p>
       </div>
 
@@ -710,6 +557,7 @@ function Map() {
               </h2>
 
               <button
+                type="button"
                 onClick={closeModal}
                 className="
                   w-8
