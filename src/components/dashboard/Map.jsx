@@ -18,6 +18,7 @@ import qao from "../../assets/images/paths/qao.jpg";
 import registrar from "../../assets/images/paths/registrar.jpg";
 import researchExtension from "../../assets/images/paths/research-extension.jpg";
 import schoolClinic from "../../assets/images/paths/school-clinic.jpg";
+import { Eye } from "lucide-react";
 
 function Map() {
   const containerRef = useRef(null);
@@ -173,15 +174,309 @@ function Map() {
     ],
 
     clinic: [
-      // Add clinic map markers here
+      {
+        id: 1,
+        name: "Canteen",
+        image: canteen,
+        x: 26.5,
+        y: 73.5,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 2,
+        name: "Admission and Scholarship",
+        image: adminssionScholar,
+        x: 23.8,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 3,
+        name: "BIT Program Chair",
+        image: BitProgramChair,
+        x: 80.5,
+        y: 19,
+        width: 78,
+        height: 100,
+      },
+      {
+        id: 4,
+        name: "Cashiering",
+        image: cashiering,
+        x: 65,
+        y: 45,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 5,
+        name: "Faculty Room",
+        image: facultyroom,
+        x: 69.7,
+        y: 19,
+        width: 80,
+        height: 100,
+      },
+      {
+        id: 6,
+        name: "Library",
+        image: library,
+        x: 44,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 7,
+        name: "MIS Office",
+        image: misOffice,
+        x: 30.5,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 8,
+        name: "Quality Assurance Office",
+        image: qao,
+        x: 60.5,
+        y: 19.5,
+        width: 70,
+        height: 78,
+      },
+      {
+        id: 9,
+        name: "Registrar",
+        image: registrar,
+        x: 20.4,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 10,
+        name: "Research and Extension",
+        image: researchExtension,
+        x: 16,
+        y: 71.5,
+        width: 100,
+        height: 90,
+      },
+      {
+        id: 11,
+        name: "School Clinic",
+        image: schoolClinic,
+        x: 17,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
     ],
 
     registrar: [
-      // Add registrar map markers here
+      {
+        id: 1,
+        name: "Canteen",
+        image: canteen,
+        x: 26.5,
+        y: 73.5,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 2,
+        name: "Admission and Scholarship",
+        image: adminssionScholar,
+        x: 23.8,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 3,
+        name: "BIT Program Chair",
+        image: BitProgramChair,
+        x: 80.5,
+        y: 19,
+        width: 78,
+        height: 100,
+      },
+      {
+        id: 4,
+        name: "Cashiering",
+        image: cashiering,
+        x: 65,
+        y: 45,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 5,
+        name: "Faculty Room",
+        image: facultyroom,
+        x: 69.7,
+        y: 19,
+        width: 80,
+        height: 100,
+      },
+      {
+        id: 6,
+        name: "Library",
+        image: library,
+        x: 44,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 7,
+        name: "MIS Office",
+        image: misOffice,
+        x: 30.5,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 8,
+        name: "Quality Assurance Office",
+        image: qao,
+        x: 60.5,
+        y: 19.5,
+        width: 70,
+        height: 78,
+      },
+      {
+        id: 9,
+        name: "Registrar",
+        image: registrar,
+        x: 20.4,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 10,
+        name: "Research and Extension",
+        image: researchExtension,
+        x: 16,
+        y: 71.5,
+        width: 100,
+        height: 90,
+      },
+      {
+        id: 11,
+        name: "School Clinic",
+        image: schoolClinic,
+        x: 17,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
     ],
 
     library: [
-      // Add library map markers here
+      {
+        id: 1,
+        name: "Canteen",
+        image: canteen,
+        x: 26.5,
+        y: 73.5,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 2,
+        name: "Admission and Scholarship",
+        image: adminssionScholar,
+        x: 23.8,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 3,
+        name: "BIT Program Chair",
+        image: BitProgramChair,
+        x: 80.5,
+        y: 19,
+        width: 78,
+        height: 100,
+      },
+      {
+        id: 4,
+        name: "Cashiering",
+        image: cashiering,
+        x: 65,
+        y: 45,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 5,
+        name: "Faculty Room",
+        image: facultyroom,
+        x: 69.7,
+        y: 19,
+        width: 80,
+        height: 100,
+      },
+      {
+        id: 6,
+        name: "Library",
+        image: library,
+        x: 44,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 7,
+        name: "MIS Office",
+        image: misOffice,
+        x: 30.5,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 8,
+        name: "Quality Assurance Office",
+        image: qao,
+        x: 60.5,
+        y: 19.5,
+        width: 70,
+        height: 78,
+      },
+      {
+        id: 9,
+        name: "Registrar",
+        image: registrar,
+        x: 20.4,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 10,
+        name: "Research and Extension",
+        image: researchExtension,
+        x: 16,
+        y: 71.5,
+        width: 100,
+        height: 90,
+      },
+      {
+        id: 11,
+        name: "School Clinic",
+        image: schoolClinic,
+        x: 17,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
     ],
   };
 
@@ -325,31 +620,10 @@ function Map() {
           {(mapMarkers[selectedPath] || []).map((marker) => (
             <button
               key={marker.id}
-              type="button"
-              title={`View ${marker.name}`}
-              onClick={() => setActiveImage(marker)}
-              className="
-    map-marker
-    absolute
-    z-20
-    flex
-    items-center
-    justify-center
-    bg-white/10
-    border
-    border-blue-600
-    rounded-md
-    text-blue-700
-    text-sm
-    font-bold
-    shadow-sm
-    backdrop-blur-[1px]
-    hover:bg-blue-600
-    hover:text-white
-    transition-all
-    duration-200
-    cursor-pointer
-  "
+              className="map-marker absolute z-20 flex items-center justify-center
+    bg-white/10 border border-transparent rounded-md
+    hover:bg-white/80 hover:border-blue-500
+    transition-all duration-200 cursor-pointer group"
               style={{
                 left: `${marker.x}%`,
                 top: `${marker.y}%`,
@@ -357,8 +631,15 @@ function Map() {
                 height: `${marker.height}px`,
                 transform: "translate(-50%, -50%)",
               }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => setActiveImage(marker)}
+              title={marker.name}
             >
-              <span>+</span>
+              <Eye
+                size={22}
+                strokeWidth={2.5}
+                className="text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              />
             </button>
           ))}
         </div>
