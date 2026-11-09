@@ -1,13 +1,27 @@
-
-import React, { useRef, useState, useLayoutEffect } from "react";
+/* eslint-disable no-unused-vars */
+import React, { useRef, useState } from "react";
 
 import mapImg from "../../assets/images/map.png";
 import registrarMap from "../../assets/images/registrarMap.png";
 import libraryMap from "../../assets/images/libraryMap.png";
 import clinicMap from "../../assets/images/clinicMap.png";
 
+// Map location images
+import canteen from "../../assets/images/paths/canteen.jpg";
+import adminssionScholar from "../../assets/images/paths/admission-scholar.jpg";
+import BitProgramChair from "../../assets/images/paths/bit-program-chair.jpg";
+import cashiering from "../../assets/images/paths/cashiering.jpg";
+import facultyroom from "../../assets/images/paths/facultyroom.jpg";
+import library from "../../assets/images/paths/library.jpg";
+import misOffice from "../../assets/images/paths/mis-office.jpg";
+import qao from "../../assets/images/paths/qao.jpg";
+import registrar from "../../assets/images/paths/registrar.jpg";
+import researchExtension from "../../assets/images/paths/research-extension.jpg";
+import schoolClinic from "../../assets/images/paths/school-clinic.jpg";
+
 function Map() {
   const containerRef = useRef(null);
+
   const isDown = useRef(false);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -16,10 +30,15 @@ function Map() {
 
   const [scale, setScale] = useState(1);
   const [selectedPath, setSelectedPath] = useState("default");
+  const [activeImage, setActiveImage] = useState(null);
 
   const minScale = 0.9;
   const maxScale = 3;
   const step = 0.1;
+
+  // ============================================================
+  // MAP IMAGES
+  // ============================================================
 
   const maps = {
     default: mapImg,
@@ -35,6 +54,141 @@ function Map() {
     library: "Library Path",
   };
 
+  // ============================================================
+  // MAP IMAGE MARKERS
+  // ============================================================
+  // x = horizontal position (%)
+  // y = vertical position (%)
+  //
+  // Adjust x and y to position each button on your map.
+  //
+  // 0%   = left / top
+  // 50%  = center
+  // 100% = right / bottom
+  //
+  // Each marker opens its corresponding image.
+  // ============================================================
+
+  const mapMarkers = {
+    default: [
+      {
+        id: 1,
+        name: "Canteen",
+        image: canteen,
+        x: 26.5,
+        y: 73.5,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 2,
+        name: "Admission and Scholarship",
+        image: adminssionScholar,
+        x: 23.8,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 3,
+        name: "BIT Program Chair",
+        image: BitProgramChair,
+        x: 80.5,
+        y: 19,
+        width: 78,
+        height: 100,
+      },
+      {
+        id: 4,
+        name: "Cashiering",
+        image: cashiering,
+        x: 65,
+        y: 45,
+        width: 80,
+        height: 60,
+      },
+      {
+        id: 5,
+        name: "Faculty Room",
+        image: facultyroom,
+        x: 69.7,
+        y: 19,
+        width: 80,
+        height: 100,
+      },
+      {
+        id: 6,
+        name: "Library",
+        image: library,
+        x: 44,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 7,
+        name: "MIS Office",
+        image: misOffice,
+        x: 30.5,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 8,
+        name: "Quality Assurance Office",
+        image: qao,
+        x: 60.5,
+        y: 19.5,
+        width: 70,
+        height: 78,
+      },
+      {
+        id: 9,
+        name: "Registrar",
+        image: registrar,
+        x: 20.4,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+      {
+        id: 10,
+        name: "Research and Extension",
+        image: researchExtension,
+        x: 16,
+        y: 71.5,
+        width: 100,
+        height: 90,
+      },
+      {
+        id: 11,
+        name: "School Clinic",
+        image: schoolClinic,
+        x: 17,
+        y: 51,
+        width: 50,
+        height: 120,
+      },
+    ],
+
+    clinic: [
+      // Add clinic map markers here
+    ],
+
+    registrar: [
+      // Add registrar map markers here
+    ],
+
+    library: [
+      // Add library map markers here
+    ],
+  };
+
+  // ============================================================
+  // ZOOM
+  // ============================================================
+
   const zoomIn = () => {
     setScale((prev) => Math.min(prev + step, maxScale));
   };
@@ -43,27 +197,28 @@ function Map() {
     setScale((prev) => Math.max(prev - step, minScale));
   };
 
-  // Switch map and reset zoom
   const selectPath = (path) => {
     setSelectedPath(path);
     setScale(1);
-  };
+    setActiveImage(null);
 
-  // Automatically scroll to bottom after EVERY image loads
-  const handleImageLoad = () => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const container = containerRef.current;
-
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
       });
-    });
+    }
   };
 
-  // Drag functionality
+  // ============================================================
+  // DRAG MAP
+  // ============================================================
+
   const onPointerDown = (e) => {
+    // Do not drag when clicking a map marker.
+    if (e.target.closest(".map-marker")) return;
+
     isDown.current = true;
 
     containerRef.current.setPointerCapture(e.pointerId);
@@ -91,84 +246,126 @@ function Map() {
     isDown.current = false;
   };
 
+  // ============================================================
+  // IMAGE MODAL
+  // ============================================================
+
+  const closeModal = () => {
+    setActiveImage(null);
+  };
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
     <div className="w-full relative space-y-4">
+      {/* PATH SELECTION */}
 
-      {/* Path Selection Buttons */}
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => selectPath("clinic")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            selectedPath === "clinic"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-white text-gray-700 border hover:bg-blue-50"
-          }`}
-        >
-          Clinic Path
-        </button>
-
-        <button
-          onClick={() => selectPath("registrar")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            selectedPath === "registrar"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-white text-gray-700 border hover:bg-blue-50"
-          }`}
-        >
-          Registrar Path
-        </button>
-
-        <button
-          onClick={() => selectPath("library")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            selectedPath === "library"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-white text-gray-700 border hover:bg-blue-50"
-          }`}
-        >
-          Library Path
-        </button>
-
-        <button
-          onClick={() => selectPath("default")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-            selectedPath === "default"
-              ? "bg-blue-600 text-white shadow"
-              : "bg-white text-gray-700 border hover:bg-blue-50"
-          }`}
-        >
-          Full Map
-        </button>
+        {Object.keys(maps).map((path) => (
+          <button
+            key={path}
+            onClick={() => selectPath(path)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+              selectedPath === path
+                ? "bg-blue-600 text-white shadow"
+                : "bg-white text-gray-700 border hover:bg-blue-50"
+            }`}
+          >
+            {path === "default" ? "Full Map" : `${mapLabels[path]}`}
+          </button>
+        ))}
       </div>
 
-      {/* Map Container */}
+      {/* MAP CONTAINER */}
+
       <div
         ref={containerRef}
-        className="relative h-[500px] overflow-auto border rounded-xl cursor-grab active:cursor-grabbing touch-none hide-scrollbar"
+        className="
+          relative
+          h-[500px]
+          overflow-auto
+          border
+          rounded-xl
+          cursor-grab
+          active:cursor-grabbing
+          touch-pan-x
+          touch-pan-y
+          hide-scrollbar
+        "
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        {/* MAP WRAPPER */}
+        {/* All markers are positioned relative to this wrapper. */}
+
         <div
+          className="relative w-[1500px] max-w-none"
           style={{
             transform: `scale(${scale})`,
             transformOrigin: "top left",
-            width: "fit-content",
           }}
         >
+          {/* MAP IMAGE */}
+
           <img
-            key={selectedPath}
             src={maps[selectedPath]}
             alt={mapLabels[selectedPath]}
-            onLoad={handleImageLoad}
-            className="w-[1500px] max-w-none select-none"
+            className="block w-[1500px] h-auto select-none pointer-events-none"
             draggable={false}
           />
+
+          {/* ================================================== */}
+          {/* ABSOLUTE POSITIONED IMAGE MARKERS */}
+          {/* ================================================== */}
+
+          {(mapMarkers[selectedPath] || []).map((marker) => (
+            <button
+              key={marker.id}
+              type="button"
+              title={`View ${marker.name}`}
+              onClick={() => setActiveImage(marker)}
+              className="
+    map-marker
+    absolute
+    z-20
+    flex
+    items-center
+    justify-center
+    bg-white/10
+    border
+    border-blue-600
+    rounded-md
+    text-blue-700
+    text-sm
+    font-bold
+    shadow-sm
+    backdrop-blur-[1px]
+    hover:bg-blue-600
+    hover:text-white
+    transition-all
+    duration-200
+    cursor-pointer
+  "
+              style={{
+                left: `${marker.x}%`,
+                top: `${marker.y}%`,
+                width: `${marker.width}px`,
+                height: `${marker.height}px`,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <span>+</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Zoom Controls */}
+      {/* ZOOM CONTROLS */}
+
       <div className="absolute top-[75px] right-4 flex flex-col gap-2 z-50">
         <button
           onClick={zoomIn}
@@ -185,13 +382,92 @@ function Map() {
         </button>
       </div>
 
-      {/* Map Label */}
-      <div className="absolute bottom-4 left-4 bg-white p-2 rounded-lg shadow z-50 pointer-events-none">
-        <p className="text-sm font-medium">
-          {mapLabels[selectedPath]}
-        </p>
+      {/* MAP LABEL */}
+
+      <div className="absolute bottom-4 left-4 bg-white p-2 rounded-lg shadow z-30 pointer-events-none">
+        <p className="text-sm font-medium">{mapLabels[selectedPath]}</p>
       </div>
 
+      {/* ====================================================== */}
+      {/* IMAGE MODAL */}
+      {/* ====================================================== */}
+
+      {activeImage && (
+        <div
+          className="
+            fixed
+            inset-0
+            z-[100]
+            bg-black/70
+            flex
+            items-center
+            justify-center
+            p-4
+          "
+          onClick={closeModal}
+        >
+          <div
+            className="
+              relative
+              bg-white
+              rounded-xl
+              shadow-2xl
+              w-full
+              max-w-3xl
+              max-h-[90vh]
+              overflow-hidden
+              flex
+              flex-col
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* MODAL HEADER */}
+
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="font-semibold text-gray-800 text-base sm:text-lg">
+                {activeImage.name}
+              </h2>
+
+              <button
+                onClick={closeModal}
+                className="
+                  w-8
+                  h-8
+                  flex
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-gray-100
+                  hover:bg-red-100
+                  hover:text-red-600
+                  text-gray-600
+                  text-xl
+                  transition
+                "
+              >
+                ×
+              </button>
+            </div>
+
+            {/* MODAL IMAGE */}
+
+            <div className="p-3 overflow-auto">
+              <img
+                src={activeImage.image}
+                alt={activeImage.name}
+                className="
+                  w-full
+                  h-auto
+                  max-h-[70vh]
+                  object-contain
+                  rounded-lg
+                  mx-auto
+                "
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
