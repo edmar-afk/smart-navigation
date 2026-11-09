@@ -22,7 +22,8 @@ import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
 
 import MedicalServicesRoundedIcon from "@mui/icons-material/MedicalServicesRounded";
 import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRounded";
-
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import logo from "../assets/images/logo.jpg";
 
 
@@ -128,26 +129,28 @@ const navSections = [
   },
 ];
 
+
 function Sidebar() {
   const [open, setOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState(null);
+
+  const toggleSection = (title) => {
+    setExpandedSection((prev) =>
+      prev === title ? null : title
+    );
+  };
 
   return (
     <>
-      {/* =========================
-          MOBILE MENU BUTTON
-      ========================== */}
+      {/* MOBILE MENU BUTTON */}
       <button
         onClick={() => setOpen(true)}
         className="
           md:hidden fixed top-4 left-4 z-[99999]
           flex items-center justify-center
-          w-11 h-11
-          rounded-xl
-          bg-green-700
-          text-white
-          shadow-lg
-          hover:bg-green-800
-          active:scale-95
+          w-11 h-11 rounded-xl
+          bg-green-700 text-white shadow-lg
+          hover:bg-green-800 active:scale-95
           transition-all
         "
         aria-label="Open menu"
@@ -155,71 +158,39 @@ function Sidebar() {
         <MenuIcon />
       </button>
 
-      {/* =========================
-          MOBILE OVERLAY
-      ========================== */}
+      {/* MOBILE OVERLAY */}
       {open && (
         <div
           onClick={() => setOpen(false)}
           className="
-            fixed inset-0
-            bg-black/40
+            fixed inset-0 bg-black/40
             backdrop-blur-[2px]
-            md:hidden
-            z-[99998]
+            md:hidden z-[99998]
           "
         />
       )}
 
-      {/* =========================
-          SIDEBAR
-      ========================== */}
+      {/* SIDEBAR */}
       <aside
         className={`
-          fixed top-0 left-0
-          z-[99999]
-          h-screen
-          w-[280px]
-
+          fixed top-0 left-0 z-[99999]
+          h-screen w-[280px]
           bg-white
-
           border-r border-green-100
-
           shadow-[4px_0_24px_rgba(0,0,0,0.05)]
-
-          transform
-          transition-transform
-          duration-300
-          ease-out
-
+          transform transition-transform duration-300 ease-out
           ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
-        {/* =========================
-            MOBILE CLOSE BUTTON
-        ========================== */}
+        {/* MOBILE CLOSE BUTTON */}
         <button
           onClick={() => setOpen(false)}
           className="
-            md:hidden
-            absolute
-            top-5
-            right-5
-
-            flex
-            items-center
-            justify-center
-
-            w-9
-            h-9
-
-            rounded-lg
-
+            md:hidden absolute top-5 right-5
+            flex items-center justify-center
+            w-9 h-9 rounded-lg
             text-gray-500
-
-            hover:bg-green-50
-            hover:text-green-700
-
+            hover:bg-green-50 hover:text-green-700
             transition
           "
           aria-label="Close menu"
@@ -227,239 +198,210 @@ function Sidebar() {
           <CloseIcon fontSize="small" />
         </button>
 
-        {/* =========================
-            HEADER / BRAND
-        ========================== */}
+        {/* HEADER / BRAND */}
         <div className="px-6 pt-7 pb-5">
           <div
             className="
-              flex
-              items-center
-              gap-3
-
-              pb-5
-
-              border-b
-              border-green-100
+              flex items-center gap-3
+              pb-5 border-b border-green-100
             "
           >
-            {/* Logo */}
             <div
               className="
-                relative
-                flex
-                items-center
-                justify-center
-
-                w-12
-                h-12
-
-                rounded-2xl
-
-                bg-green-50
-
-                ring-1
-                ring-green-100
-
+                relative flex items-center justify-center
+                w-12 h-12 rounded-2xl
+                bg-green-50 ring-1 ring-green-100
                 overflow-hidden
               "
             >
               <img
                 src={logo}
                 alt="JHCSC Logo"
-                className="
-                  w-full
-                  h-full
-                  object-cover
-                "
+                className="w-full h-full object-cover"
               />
             </div>
 
-            {/* Brand */}
             <div className="min-w-0">
-              <p
-                className="
-                  text-sm
-                  font-bold
-                  text-gray-800
-                  leading-tight
-                "
-              >
+              <p className="text-sm font-bold text-gray-800 leading-tight">
                 JHCSC
               </p>
 
-              <p
-                className="
-                  mt-1
-                  text-[11px]
-                  text-gray-500
-                  leading-tight
-                "
-              >
+              <p className="mt-1 text-[11px] text-gray-500 leading-tight">
                 Canuto Campus
               </p>
             </div>
           </div>
         </div>
 
-        {/* =========================
-            NAVIGATION
-        ========================== */}
+        {/* NAVIGATION */}
         <nav
           className="
             h-[calc(100vh-115px)]
-            overflow-y-auto
-            px-4
-            pb-10
+            overflow-y-auto px-4 pb-10
             sidebar-scroll
           "
         >
-          <ul className="space-y-5">
-            {navSections.map((section, sectionIndex) => (
-              <li key={sectionIndex}>
-                {/* Section title */}
-                {section.title && (
-                  <div className="px-3 mb-2">
-                    <p
-                      className="
-                        text-[10px]
-                        font-bold
-                        uppercase
-                        tracking-[0.14em]
-                        text-green-700
-                      "
+          <ul className="space-y-3">
+
+            {navSections.map((section, sectionIndex) => {
+              const isExpandable = section.title !== null;
+              const isExpanded = expandedSection === section.title;
+
+              return (
+                <li key={sectionIndex}>
+
+                  {/* SECTION TITLE */}
+                  {section.title && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(section.title)}
+                      className={`
+                        w-full flex items-center justify-between
+                        px-3 py-3 rounded-xl
+                        text-left transition-all duration-200
+                        ${
+                          isExpanded
+                            ? "bg-green-50 text-green-800"
+                            : "text-green-700 hover:bg-green-50"
+                        }
+                      `}
+                      aria-expanded={isExpanded}
                     >
-                      {section.title}
-                    </p>
-                  </div>
-                )}
+                      <span
+                        className="
+                          text-[11px]
+                          font-bold
+                          uppercase
+                          tracking-[0.14em]
+                        "
+                      >
+                        {section.title}
+                      </span>
 
-                {/* Section items */}
-                <ul className="space-y-1">
-                  {section.items.map((item, itemIndex) => {
-                    const Icon = item.icon;
+                      {isExpanded ? (
+                        <ExpandLessRoundedIcon
+                          sx={{ fontSize: 20 }}
+                        />
+                      ) : (
+                        <ExpandMoreRoundedIcon
+                          sx={{ fontSize: 20 }}
+                        />
+                      )}
+                    </button>
+                  )}
 
-                    return (
-                      <li key={itemIndex}>
-                        <NavLink
-                          to={item.href}
-                          onClick={() => setOpen(false)}
-                          className={({ isActive }) => `
-                            group
-                            relative
+                  {/* SECTION ITEMS */}
+                  <div
+                    className={`
+                      grid transition-all duration-300 ease-in-out
+                      ${
+                        !isExpandable || isExpanded
+                          ? "grid-rows-[1fr] opacity-100 mt-2"
+                          : "grid-rows-[0fr] opacity-0 mt-0"
+                      }
+                    `}
+                  >
+                    <div className="overflow-hidden">
+                      <ul className="space-y-1">
 
-                            flex
-                            items-center
+                        {section.items.map((item, itemIndex) => {
+                          const Icon = item.icon;
 
-                            min-h-[46px]
-
-                            px-3
-                            py-2
-
-                            rounded-xl
-
-                            text-[13px]
-                            font-medium
-
-                            transition-all
-                            duration-200
-
-                            ${
-                              isActive
-                                ? `
-                                  bg-green-700
-                                  text-white
-                                  shadow-md
-                                  shadow-green-700/20
-                                `
-                                : `
-                                  text-gray-600
-                                  hover:bg-green-50
-                                  hover:text-green-800
-                                `
-                            }
-                          `}
-                        >
-                          {({ isActive }) => (
-                            <>
-                              {/* Active indicator */}
-                              {isActive && (
-                                <span
-                                  className="
-                                    absolute
-                                    left-0
-                                    top-1/2
-                                    -translate-y-1/2
-
-                                    w-1
-                                    h-6
-
-                                    rounded-r-full
-
-                                    bg-green-300
-                                  "
-                                />
-                              )}
-
-                              {/* Icon container */}
-                              <span
-                                className={`
-                                  flex
-                                  items-center
-                                  justify-center
-
-                                  flex-shrink-0
-
-                                  w-9
-                                  h-9
-
-                                  rounded-lg
-
-                                  transition-all
+                          return (
+                            <li key={itemIndex}>
+                              <NavLink
+                                to={item.href}
+                                onClick={() => {
+                                  setOpen(false);
+                                }}
+                                className={({ isActive }) => `
+                                  group relative
+                                  flex items-center
+                                  min-h-[46px]
+                                  px-3 py-2
+                                  rounded-xl
+                                  text-[13px]
+                                  font-medium
+                                  transition-all duration-200
 
                                   ${
                                     isActive
-                                      ? "bg-white/15 text-white"
+                                      ? `
+                                        bg-green-700
+                                        text-white
+                                        shadow-md
+                                        shadow-green-700/20
+                                      `
                                       : `
-                                        bg-green-50
-                                        text-green-700
-                                        group-hover:bg-green-100
+                                        text-gray-600
+                                        hover:bg-green-50
+                                        hover:text-green-800
                                       `
                                   }
                                 `}
                               >
-                                <Icon
-                                  sx={{
-                                    fontSize: 21,
-                                  }}
-                                />
-                              </span>
+                                {({ isActive }) => (
+                                  <>
+                                    {/* ACTIVE INDICATOR */}
+                                    {isActive && (
+                                      <span
+                                        className="
+                                          absolute left-0 top-1/2
+                                          -translate-y-1/2
+                                          w-1 h-6
+                                          rounded-r-full
+                                          bg-green-300
+                                        "
+                                      />
+                                    )}
 
-                              {/* Label */}
-                              <span
-                                className="
-                                  ml-3
-                                  leading-[1.25]
-                                "
-                              >
-                                {item.label}
-                              </span>
-                            </>
-                          )}
-                        </NavLink>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </li>
-            ))}
+                                    {/* ICON */}
+                                    <span
+                                      className={`
+                                        flex items-center justify-center
+                                        flex-shrink-0
+                                        w-9 h-9
+                                        rounded-lg
+                                        transition-all
+
+                                        ${
+                                          isActive
+                                            ? "bg-white/15 text-white"
+                                            : `
+                                              bg-green-50
+                                              text-green-700
+                                              group-hover:bg-green-100
+                                            `
+                                        }
+                                      `}
+                                    >
+                                      <Icon sx={{ fontSize: 21 }} />
+                                    </span>
+
+                                    {/* LABEL */}
+                                    <span className="ml-3 leading-[1.25]">
+                                      {item.label}
+                                    </span>
+                                  </>
+                                )}
+                              </NavLink>
+                            </li>
+                          );
+                        })}
+
+                      </ul>
+                    </div>
+                  </div>
+
+                </li>
+              );
+            })}
+
           </ul>
         </nav>
       </aside>
 
-      {/* =========================
-          HIDDEN SCROLLBAR
-      ========================== */}
+      {/* HIDDEN SCROLLBAR */}
       <style>{`
         .sidebar-scroll::-webkit-scrollbar {
           width: 0px;
