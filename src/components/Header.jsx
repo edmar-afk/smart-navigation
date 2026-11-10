@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import PersonIcon from "@mui/icons-material/Person";
-
+import { Link } from "react-router-dom";
 function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -57,7 +57,7 @@ function Header() {
           horizontal: "right",
         }}
       >
-        <MenuItem onClick={handleLogout}>Logout</MenuItem>
+        <MenuItem onClick={handleLogout}><Link to={'/logout'}>Logout</Link></MenuItem>
       </Menu>
     </div>
   );
