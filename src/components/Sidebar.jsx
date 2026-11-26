@@ -40,7 +40,7 @@ const navSections = [
       { label: "Disaster Risk Reduction", mapPath: "disaster" },
       { label: "Drawing Room", mapPath: "drawingRoom" },
       { label: "Faculty Room", mapPath: "facultyRoom" },
-      { label: "Guidance Office", mapPath: "guidance" },
+      { label: "Guidance Office", mapPath: "guidance", lat: '7.850725', lng:'123.185621' },
       { label: "Human Resource Office", mapPath: "hrod" },
       { label: "Laboratory 1", mapPath: "lab1" },
       { label: "Laboratory 2", mapPath: "lab2" },

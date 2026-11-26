@@ -59,87 +59,104 @@ const CAMPUS_DESTINATIONS = {
   clinic: {
     label: "School Clinic",
     image: clinicImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   registrar: {
     label: "Registrar",
     image: registrarImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   library: {
     label: "Library",
     image: libraryImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   bit: {
     label: "BIT Building",
     image: bitImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   cadlab: {
     label: "CAD Laboratory",
     image: cadlabImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   canteen: {
     label: "Canteen",
     image: canteenImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   ch3: {
     label: "CH Building 3",
     image: ch3Image,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   ch4567: {
     label: "CH Buildings 4, 5, 6, and 7",
     image: ch4567Image,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   disaster: {
     label: "Disaster Management Office",
     image: disasterImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   drawingRoom: {
     label: "Drawing Room",
     image: drawingRoomImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   facultyRoom: {
     label: "Faculty Room",
     image: facultyRoomImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   guidance: {
     label: "Guidance Office",
     image: guidanceImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850725,
+    lng: 123.185621,
   },
   hrod: {
     label: "Human Resource Office",
     image: hrodImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   lab1: {
     label: "Laboratory 1",
     image: lab1Image,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   lab2: {
     label: "Laboratory 2",
     image: lab2Image,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   mis: {
     label: "Management Information System",
     image: misImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
   qao: {
     label: "Quality Assurance Office",
     image: qaoImage,
-    ...TEMP_DESTINATION,
+    lat: 7.850664,
+    lng: 123.185643,
   },
 };
 
@@ -480,15 +497,11 @@ function Map({ selectedPath = "default" }) {
   // ----------------------------------------------------------
 
   const destination = useMemo(() => {
-    if (customDestination) {
-      return customDestination;
+    if (selectedPath !== "default") {
+      return CAMPUS_DESTINATIONS[selectedPath] || null;
     }
 
-    if (selectedPath === "default") {
-      return null;
-    }
-
-    return CAMPUS_DESTINATIONS[selectedPath] || null;
+    return customDestination;
   }, [selectedPath, customDestination]);
 
   // ----------------------------------------------------------
@@ -731,7 +744,7 @@ function Map({ selectedPath = "default" }) {
                     <h3 className="text-sm font-bold leading-snug text-gray-900">
                       {destination.label || destination.name}
                     </h3>
-
+                    {/* 
                     <div className="mt-2 space-y-1">
                       <p className="text-xs text-gray-600">
                         Latitude: {destination.lat.toFixed(6)}
@@ -740,7 +753,7 @@ function Map({ selectedPath = "default" }) {
                       <p className="text-xs text-gray-600">
                         Longitude: {destination.lng.toFixed(6)}
                       </p>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </Popup>
