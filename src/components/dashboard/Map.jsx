@@ -7,6 +7,7 @@ import {
   Polyline,
   Popup,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -44,7 +45,7 @@ const DEFAULT_LOCATION = {
 };
 
 // Temporary coordinates.
-// Update these individually when you have the actual locations.
+// Update these individually when you have actual locations.
 const TEMP_DESTINATION = {
   lat: 7.851184,
   lng: 123.185355,
@@ -242,20 +243,7 @@ function formatWalkingTime(seconds) {
 }
 
 // ============================================================
-// FORMAT ARRIVAL TIME
-// ============================================================
-
-function formatArrivalTime(seconds) {
-  const arrival = new Date(Date.now() + seconds * 1000);
-
-  return arrival.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-// ============================================================
-// SMALL DESTINATION LOCATION MARKER
+// DESTINATION MARKER ICON
 // ============================================================
 
 const destinationLocationIcon = L.divIcon({
@@ -286,6 +274,26 @@ const destinationLocationIcon = L.divIcon({
 });
 
 // ============================================================
+// CURRENT LOCATION MARKER ICON
+// ============================================================
+
+const currentLocationIcon = L.divIcon({
+  className: "current-location-marker",
+  html: `
+    <div style="
+      width: 18px;
+      height: 18px;
+      background: #2563eb;
+      border: 4px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+    "></div>
+  `,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
+// ============================================================
 // MAP INSTANCE CONTROLLER
 // ============================================================
 
@@ -300,12 +308,32 @@ function MapInstanceController({ onMapReady }) {
 }
 
 // ============================================================
+// MAP CLICK HANDLER
+// User can click anywhere to select a destination.
+// ============================================================
+
+function MapClickHandler({ onLocationSelect }) {
+  useMapEvents({
+    click(event) {
+      onLocationSelect({
+        lat: Number(event.latlng.lat.toFixed(6)),
+        lng: Number(event.latlng.lng.toFixed(6)),
+        name: "Custom Destination",
+      });
+    },
+  });
+
+  return null;
+}
+
+// ============================================================
 // MAP CONTROLLER
 // Handles routing and map movement.
 // ============================================================
 
 function MapController({
   selectedPath,
+  customDestination,
   startLocation,
   onRouteUpdate,
   onRouteLoading,
@@ -314,7 +342,11 @@ function MapController({
   const map = useMap();
 
   useEffect(() => {
-    if (selectedPath === "default") {
+    const destination =
+      customDestination ||
+      (selectedPath !== "default" ? CAMPUS_DESTINATIONS[selectedPath] : null);
+
+    if (!destination) {
       onRouteUpdate(null);
       onRouteLoading(false);
       onRouteError("");
@@ -323,15 +355,6 @@ function MapController({
         duration: 1,
       });
 
-      return;
-    }
-
-    const destination = CAMPUS_DESTINATIONS[selectedPath];
-
-    if (!destination) {
-      onRouteUpdate(null);
-      onRouteLoading(false);
-      onRouteError("");
       return;
     }
 
@@ -423,6 +446,7 @@ function MapController({
     };
   }, [
     selectedPath,
+    customDestination,
     startLocation,
     map,
     onRouteUpdate,
@@ -440,6 +464,8 @@ function MapController({
 function Map({ selectedPath = "default" }) {
   const [startLocation, setStartLocation] = useState(DEFAULT_LOCATION);
 
+  const [customDestination, setCustomDestination] = useState(null);
+
   const [route, setRoute] = useState(null);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState("");
@@ -449,11 +475,30 @@ function Map({ selectedPath = "default" }) {
 
   const [mapInstance, setMapInstance] = useState(null);
 
+  // ----------------------------------------------------------
+  // SELECTED DESTINATION
+  // ----------------------------------------------------------
+
   const destination = useMemo(() => {
-    if (selectedPath === "default") return null;
+    if (customDestination) {
+      return customDestination;
+    }
+
+    if (selectedPath === "default") {
+      return null;
+    }
 
     return CAMPUS_DESTINATIONS[selectedPath] || null;
-  }, [selectedPath]);
+  }, [selectedPath, customDestination]);
+
+  // ----------------------------------------------------------
+  // MAP CLICK
+  // ----------------------------------------------------------
+
+  const handleMapLocationSelect = (location) => {
+    setCustomDestination(location);
+    setLocationError("");
+  };
 
   // ----------------------------------------------------------
   // CURRENT LOCATION
@@ -515,6 +560,7 @@ function Map({ selectedPath = "default" }) {
 
   const handleDefaultLocation = () => {
     setStartLocation(DEFAULT_LOCATION);
+    setCustomDestination(null);
     setLocationError("");
 
     if (mapInstance) {
@@ -522,6 +568,16 @@ function Map({ selectedPath = "default" }) {
         duration: 1,
       });
     }
+  };
+
+  // ----------------------------------------------------------
+  // CLEAR CUSTOM DESTINATION
+  // ----------------------------------------------------------
+
+  const handleClearDestination = () => {
+    setCustomDestination(null);
+    setRoute(null);
+    setRouteError("");
   };
 
   // ----------------------------------------------------------
@@ -576,10 +632,6 @@ function Map({ selectedPath = "default" }) {
 
   return (
     <div className="relative w-full">
-      {/* ================================================== */}
-      {/* MAP CONTAINER */}
-      {/* ================================================== */}
-
       <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 shadow-lg">
         <MapContainer
           center={[DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng]}
@@ -595,6 +647,10 @@ function Map({ selectedPath = "default" }) {
           className="w-full h-[calc(100vh-220px)] min-h-[800px]"
         >
           <MapInstanceController onMapReady={handleMapReady} />
+
+          {/* MAP CLICK HANDLER */}
+
+          <MapClickHandler onLocationSelect={handleMapLocationSelect} />
 
           {/* SATELLITE IMAGERY */}
 
@@ -617,6 +673,7 @@ function Map({ selectedPath = "default" }) {
 
           <MapController
             selectedPath={selectedPath}
+            customDestination={customDestination}
             startLocation={startLocation}
             onRouteUpdate={handleRouteUpdate}
             onRouteLoading={handleRouteLoading}
@@ -627,26 +684,10 @@ function Map({ selectedPath = "default" }) {
 
           <Marker
             position={[startLocation.lat, startLocation.lng]}
-            icon={L.divIcon({
-              className: "current-location-marker",
-              html: `
-                <div style="
-                  width: 18px;
-                  height: 18px;
-                  background: #2563eb;
-                  border: 4px solid white;
-                  border-radius: 50%;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
-                "></div>
-              `,
-              iconSize: [18, 18],
-              iconAnchor: [9, 9],
-            })}
+            icon={currentLocationIcon}
           />
 
-          {/* ================================================== */}
-          {/* DESTINATION MARKER WITH BUILDING POPUP */}
-          {/* ================================================== */}
+          {/* DESTINATION MARKER */}
 
           {destination && (
             <Marker
@@ -667,25 +708,39 @@ function Map({ selectedPath = "default" }) {
                 <div className="w-[210px] overflow-hidden rounded-lg">
                   {/* BUILDING IMAGE */}
 
-                  <div className="h-[125px] w-full overflow-hidden rounded-lg bg-gray-100">
-                    <img
-                      src={destination.image}
-                      alt={destination.label}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
+                  {destination.image && (
+                    <div className="h-[125px] w-full overflow-hidden rounded-lg bg-gray-100">
+                      <img
+                        src={destination.image}
+                        alt={destination.label}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
 
-                  {/* BUILDING INFORMATION */}
+                  {/* DESTINATION INFORMATION */}
 
-                  <div className="px-1 pb-1 pt-3">
-                    <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-blue-600">
-                      <span>📍</span>
-                      Campus Location
+                  <div className="px-1 pb-2 pt-3">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-blue-600">
+                      📍{" "}
+                      {destination.image
+                        ? "Campus Location"
+                        : "Custom Destination"}
                     </div>
 
                     <h3 className="text-sm font-bold leading-snug text-gray-900">
-                      {destination.label}
+                      {destination.label || destination.name}
                     </h3>
+
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-gray-600">
+                        Latitude: {destination.lat.toFixed(6)}
+                      </p>
+
+                      <p className="text-xs text-gray-600">
+                        Longitude: {destination.lng.toFixed(6)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </Popup>
@@ -753,17 +808,61 @@ function Map({ selectedPath = "default" }) {
         {/* ================================================== */}
 
         {destination && (
-          <div className="absolute bottom-4 left-4 right-4 z-[1000] sm:left-auto sm:right-4 sm:w-[250px]">
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] sm:left-auto sm:right-4 sm:w-[280px]">
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+              {/* DESTINATION NAME */}
+
               <div className="mb-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                   Selected Destination
                 </p>
 
                 <h3 className="mt-1 text-base font-bold text-gray-900">
-                  {destination.label}
+                  {destination.label || destination.name}
                 </h3>
               </div>
+
+              {/* DESTINATION COORDINATES */}
+
+              <div className="mb-3 rounded-lg bg-gray-50 p-3">
+                <p className="text-xs font-semibold text-gray-500">
+                  DESTINATION COORDINATES
+                </p>
+
+                <div className="mt-2 flex justify-between gap-2 text-xs">
+                  <span className="text-gray-500">Latitude</span>
+
+                  <span className="font-semibold text-gray-800">
+                    {destination.lat.toFixed(6)}
+                  </span>
+                </div>
+
+                <div className="mt-1 flex justify-between gap-2 text-xs">
+                  <span className="text-gray-500">Longitude</span>
+
+                  <span className="font-semibold text-gray-800">
+                    {destination.lng.toFixed(6)}
+                  </span>
+                </div>
+
+                {/* COPY COORDINATES */}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(`${destination.lat}, ${destination.lng}`)
+                      .catch((error) => {
+                        console.error("Copy failed:", error);
+                      });
+                  }}
+                  className="mt-3 w-full rounded-md bg-blue-50 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                >
+                  Copy Coordinates
+                </button>
+              </div>
+
+              {/* ROUTE STATUS */}
 
               {routeLoading ? (
                 <div className="flex items-center gap-3 py-3 text-sm text-gray-600">
@@ -801,6 +900,18 @@ function Map({ selectedPath = "default" }) {
               <p className="mt-3 text-xs text-gray-400">
                 Based on the estimated pedestrian route duration.
               </p>
+
+              {/* CLEAR CUSTOM DESTINATION */}
+
+              {customDestination && (
+                <button
+                  type="button"
+                  onClick={handleClearDestination}
+                  className="mt-3 w-full rounded-lg border border-gray-200 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
+                >
+                  Clear Custom Destination
+                </button>
+              )}
             </div>
           </div>
         )}
