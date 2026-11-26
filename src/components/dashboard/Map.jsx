@@ -400,7 +400,7 @@ function WalkingPerson({ route, connectorCoordinates }) {
     let startTime = null;
 
     // Walking speed in meters per second.
-    const WALKING_SPEED = 5.0;
+    const WALKING_SPEED = 25.0;
 
     const animate = (timestamp) => {
       if (startTime === null) {
