@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import L from "leaflet";
 import {
   MapContainer,
@@ -11,6 +17,9 @@ import {
 } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
+
+// WALKING PERSON GIF
+import walkingPerson from "../../assets/images/walking-person.gif";
 
 // ============================================================
 // DESTINATION IMAGES
@@ -42,13 +51,6 @@ const DEFAULT_LOCATION = {
   lat: 7.850736,
   lng: 123.184834,
   name: "Default Location",
-};
-
-// Temporary coordinates.
-// Update these individually when you have actual locations.
-const TEMP_DESTINATION = {
-  lat: 7.851184,
-  lng: 123.185355,
 };
 
 // ============================================================
@@ -311,6 +313,161 @@ const currentLocationIcon = L.divIcon({
 });
 
 // ============================================================
+// WALKING PERSON MARKER ICON
+// ============================================================
+
+const walkingPersonIcon = L.divIcon({
+  className: "walking-person-marker",
+  html: `
+    <div style="
+      width: 64px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    ">
+      <img
+        src="${walkingPerson}"
+        alt="Walking person"
+        style="
+          width: 64px;
+          height: 56px;
+          object-fit: contain;
+          display: block;
+          background: transparent;
+          pointer-events: none;
+        "
+      />
+    </div>
+  `,
+  iconSize: [64, 76],
+  iconAnchor: [32, 64],
+});
+
+// ============================================================
+// WALKING PERSON COMPONENT
+// Follows the actual route coordinates.
+// Includes the dotted connector when available.
+// ============================================================
+
+function WalkingPerson({ route, connectorCoordinates }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!route || !route.coordinates?.length) return;
+
+    // Combine the solid route and dotted connector.
+    const coordinates = [...route.coordinates];
+
+    if (connectorCoordinates?.length) {
+      coordinates.push(...connectorCoordinates.slice(1));
+    }
+
+    // Ensure the destination is included.
+    const destination = [route.destination.lat, route.destination.lng];
+
+    const last = coordinates[coordinates.length - 1];
+
+    if (L.latLng(last).distanceTo(L.latLng(destination)) > 0.5) {
+      coordinates.push(destination);
+    }
+
+    // Calculate cumulative distances.
+    const points = coordinates.map((coordinate) =>
+      L.latLng(coordinate[0], coordinate[1]),
+    );
+
+    const cumulative = [0];
+
+    for (let i = 1; i < points.length; i++) {
+      cumulative.push(cumulative[i - 1] + points[i - 1].distanceTo(points[i]));
+    }
+
+    const totalDistance = cumulative[cumulative.length - 1];
+
+    if (totalDistance <= 0) return;
+
+    // Create a fresh marker at the beginning of every route.
+    const marker = L.marker(points[0], {
+      icon: walkingPersonIcon,
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: 2000,
+    }).addTo(map);
+
+    let animationFrame;
+    let startTime = null;
+
+    // Walking speed in meters per second.
+    const WALKING_SPEED = 5.0;
+
+    const animate = (timestamp) => {
+      if (startTime === null) {
+        startTime = timestamp;
+      }
+
+      // Calculate distance traveled using elapsed time.
+      const elapsed = (timestamp - startTime) / 1000;
+
+      const distanceTraveled = Math.min(elapsed * WALKING_SPEED, totalDistance);
+
+      // Stop at destination.
+      if (distanceTraveled >= totalDistance) {
+        marker.setLatLng(points[points.length - 1]);
+        return;
+      }
+
+      // Find the current route segment.
+      let segmentIndex = 0;
+
+      while (
+        segmentIndex < cumulative.length - 2 &&
+        cumulative[segmentIndex + 1] < distanceTraveled
+      ) {
+        segmentIndex++;
+      }
+
+      const segmentStart = cumulative[segmentIndex];
+      const segmentEnd = cumulative[segmentIndex + 1];
+
+      const segmentDistance = segmentEnd - segmentStart;
+
+      const progress =
+        segmentDistance > 0
+          ? (distanceTraveled - segmentStart) / segmentDistance
+          : 0;
+
+      // Interpolate position along the current segment.
+      const start = points[segmentIndex];
+      const end = points[segmentIndex + 1];
+
+      const lat = start.lat + (end.lat - start.lat) * progress;
+
+      const lng = start.lng + (end.lng - start.lng) * progress;
+
+      marker.setLatLng([lat, lng]);
+
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    // Start walking.
+    animationFrame = requestAnimationFrame(animate);
+
+    // Cancel old animation and remove marker on route change.
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+
+      map.removeLayer(marker);
+    };
+  }, [map, route, connectorCoordinates]);
+
+  return null;
+}
+
+// ============================================================
 // MAP INSTANCE CONTROLLER
 // ============================================================
 
@@ -326,7 +483,6 @@ function MapInstanceController({ onMapReady }) {
 
 // ============================================================
 // MAP CLICK HANDLER
-// User can click anywhere to select a destination.
 // ============================================================
 
 function MapClickHandler({ onLocationSelect }) {
@@ -443,7 +599,9 @@ function MapController({
 
         map.flyTo([destination.lat, destination.lng], 18, { duration: 1 });
       } catch (error) {
-        if (error.name === "AbortError" || cancelled) return;
+        if (error.name === "AbortError" || cancelled) {
+          return;
+        }
 
         console.error("Walking route error:", error);
 
@@ -488,6 +646,7 @@ function Map({ selectedPath = "default" }) {
   const [routeError, setRouteError] = useState("");
 
   const [locationLoading, setLocationLoading] = useState(false);
+
   const [locationError, setLocationError] = useState("");
 
   const [mapInstance, setMapInstance] = useState(null);
@@ -597,7 +756,7 @@ function Map({ selectedPath = "default" }) {
   // MAP CALLBACKS
   // ----------------------------------------------------------
 
-  const handleMapReady = React.useCallback((map) => {
+  const handleMapReady = useCallback((map) => {
     setMapInstance(map);
   }, []);
 
@@ -605,15 +764,15 @@ function Map({ selectedPath = "default" }) {
   // ROUTE CALLBACKS
   // ----------------------------------------------------------
 
-  const handleRouteUpdate = React.useCallback((newRoute) => {
+  const handleRouteUpdate = useCallback((newRoute) => {
     setRoute(newRoute);
   }, []);
 
-  const handleRouteLoading = React.useCallback((loading) => {
+  const handleRouteLoading = useCallback((loading) => {
     setRouteLoading(loading);
   }, []);
 
-  const handleRouteError = React.useCallback((message) => {
+  const handleRouteError = useCallback((message) => {
     setRouteError(message);
   }, []);
 
@@ -622,7 +781,9 @@ function Map({ selectedPath = "default" }) {
   // ----------------------------------------------------------
 
   const connectorCoordinates = useMemo(() => {
-    if (!route || !route.coordinates.length) return null;
+    if (!route || !route.coordinates.length) {
+      return null;
+    }
 
     const lastCoordinate = route.coordinates[route.coordinates.length - 1];
 
@@ -719,19 +880,15 @@ function Map({ selectedPath = "default" }) {
                 className="building-location-popup"
               >
                 <div className="w-[210px] overflow-hidden rounded-lg">
-                  {/* BUILDING IMAGE */}
-
                   {destination.image && (
                     <div className="h-[125px] w-full overflow-hidden rounded-lg bg-gray-100">
                       <img
                         src={destination.image}
-                        alt={destination.label}
+                        alt={destination.label || destination.name}
                         className="h-full w-full object-cover"
                       />
                     </div>
                   )}
-
-                  {/* DESTINATION INFORMATION */}
 
                   <div className="px-1 pb-2 pt-3">
                     <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-blue-600">
@@ -744,16 +901,6 @@ function Map({ selectedPath = "default" }) {
                     <h3 className="text-sm font-bold leading-snug text-gray-900">
                       {destination.label || destination.name}
                     </h3>
-                    {/* 
-                    <div className="mt-2 space-y-1">
-                      <p className="text-xs text-gray-600">
-                        Latitude: {destination.lat.toFixed(6)}
-                      </p>
-
-                      <p className="text-xs text-gray-600">
-                        Longitude: {destination.lng.toFixed(6)}
-                      </p>
-                    </div> */}
                   </div>
                 </div>
               </Popup>
@@ -787,6 +934,18 @@ function Map({ selectedPath = "default" }) {
                 dashArray: "2, 10",
                 lineCap: "round",
               }}
+            />
+          )}
+
+          {/* ================================================== */}
+          {/* ANIMATED WALKING PERSON */}
+          {/* ================================================== */}
+
+          {route && !routeLoading && (
+            <WalkingPerson
+              route={route}
+              connectorCoordinates={connectorCoordinates}
+              startLocation={startLocation}
             />
           )}
         </MapContainer>
@@ -823,8 +982,6 @@ function Map({ selectedPath = "default" }) {
         {destination && (
           <div className="absolute bottom-4 left-4 right-4 z-[1000] sm:left-auto sm:right-4 sm:w-[280px]">
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
-              {/* DESTINATION NAME */}
-
               <div className="mb-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                   Selected Destination
@@ -834,46 +991,6 @@ function Map({ selectedPath = "default" }) {
                   {destination.label || destination.name}
                 </h3>
               </div>
-
-              {/* DESTINATION COORDINATES */}
-
-              {/* <div className="mb-3 rounded-lg bg-gray-50 p-3">
-                <p className="text-xs font-semibold text-gray-500">
-                  DESTINATION COORDINATES
-                </p>
-
-                <div className="mt-2 flex justify-between gap-2 text-xs">
-                  <span className="text-gray-500">Latitude</span>
-
-                  <span className="font-semibold text-gray-800">
-                    {destination.lat.toFixed(6)}
-                  </span>
-                </div>
-
-                <div className="mt-1 flex justify-between gap-2 text-xs">
-                  <span className="text-gray-500">Longitude</span>
-
-                  <span className="font-semibold text-gray-800">
-                    {destination.lng.toFixed(6)}
-                  </span>
-                </div>
-
-               
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText(`${destination.lat}, ${destination.lng}`)
-                      .catch((error) => {
-                        console.error("Copy failed:", error);
-                      });
-                  }}
-                  className="mt-3 w-full rounded-md bg-blue-50 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
-                >
-                  Copy Coordinates
-                </button>
-              </div> */}
 
               {/* ROUTE STATUS */}
 
@@ -909,10 +1026,6 @@ function Map({ selectedPath = "default" }) {
                   Waiting for walking route information...
                 </p>
               )}
-              {/* 
-              <p className="mt-3 text-xs text-gray-400">
-                Based on the estimated pedestrian route duration.
-              </p> */}
 
               {/* CLEAR CUSTOM DESTINATION */}
 
