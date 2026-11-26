@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -13,7 +14,15 @@ const DEFAULT_LOCATION = {
   name: "Default Location",
 };
 
-const OSRM_URL = "https://router.project-osrm.org/route/v1/driving";
+const MAP_ZOOM = 18;
+
+const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
+
+const SATELLITE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+
+const LABELS_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
 
 // ============================================================
 // MAP ICONS
@@ -22,31 +31,78 @@ const OSRM_URL = "https://router.project-osrm.org/route/v1/driving";
 const createIcon = (color) =>
   L.divIcon({
     className: "",
-    html: `
-      <div style="
-        width: 22px;
-        height: 22px;
-        background: ${color};
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      "></div>
-    `,
+    html: `<div style="width:22px;height:22px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`,
     iconSize: [22, 22],
     iconAnchor: [11, 11],
   });
 
 // ============================================================
-// TILE LAYERS
+// POLYLINE6 DECODER
 // ============================================================
 
-const SATELLITE_URL =
-  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const decodePolyline6 = (encoded) => {
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  const coordinates = [];
 
-const LABELS_URL =
-  "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
+  while (index < encoded.length) {
+    let result = 0;
+    let shift = 0;
+    let byte;
 
-const STREET_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+
+    const deltaLat = result & 1 ? ~(result >> 1) : result >> 1;
+    lat += deltaLat;
+
+    result = 0;
+    shift = 0;
+
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+
+    const deltaLng = result & 1 ? ~(result >> 1) : result >> 1;
+    lng += deltaLng;
+
+    coordinates.push([lat / 1e6, lng / 1e6]);
+  }
+
+  return coordinates;
+};
+
+// ============================================================
+// TIME FORMATTERS
+// ============================================================
+
+const formatArrivalTime = (durationSeconds) => {
+  const arrival = new Date(Date.now() + durationSeconds * 1000);
+
+  return arrival.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const formatDuration = (seconds) => {
+  const totalMinutes = Math.ceil(seconds / 60);
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`;
+  }
+
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
+};
 
 // ============================================================
 // MAP COMPONENT
@@ -58,15 +114,69 @@ function Map({ selectedPath = "default" }) {
 
   const routeLayerRef = useRef(null);
   const destinationMarkerRef = useRef(null);
-  const requestIdRef = useRef(0);
+  const startMarkerRef = useRef(null);
 
-  const layersRef = useRef({});
+  const activeStartRef = useRef(DEFAULT_LOCATION);
+  const requestIdRef = useRef(0);
 
   const [routeInfo, setRouteInfo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [mapStyle, setMapStyle] = useState("satellite-labels");
+  const [startMode, setStartMode] = useState("default");
+  const [startLabel, setStartLabel] = useState("Default Location");
+
+  // ==========================================================
+  // CLEAR ROUTE
+  // ==========================================================
+
+  const clearRoute = () => {
+    const map = mapRef.current;
+
+    requestIdRef.current++;
+
+    if (map && routeLayerRef.current) {
+      map.removeLayer(routeLayerRef.current);
+      routeLayerRef.current = null;
+    }
+
+    if (map && destinationMarkerRef.current) {
+      map.removeLayer(destinationMarkerRef.current);
+      destinationMarkerRef.current = null;
+    }
+
+    setRouteInfo(null);
+    setLoading(false);
+    setError("");
+  };
+
+  // ==========================================================
+  // UPDATE STARTING LOCATION
+  // ==========================================================
+
+  const updateStartingLocation = (location, mode, label) => {
+    const map = mapRef.current;
+
+    if (!map) return;
+
+    clearRoute();
+
+    activeStartRef.current = location;
+
+    setStartMode(mode);
+    setStartLabel(label);
+
+    if (startMarkerRef.current) {
+      startMarkerRef.current.setLatLng([location.lat, location.lng]);
+
+      startMarkerRef.current.bindPopup(
+        `<strong>${label}</strong><br/>Starting Location`,
+      );
+    }
+
+    map.setView([location.lat, location.lng], MAP_ZOOM, { animate: false });
+  };
 
   // ==========================================================
   // INITIALIZE MAP
@@ -77,111 +187,85 @@ function Map({ selectedPath = "default" }) {
 
     const map = L.map(mapContainerRef.current, {
       center: [DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng],
-      zoom: 19,
-      minZoom: 19,
-      maxZoom: 19,
+      zoom: MAP_ZOOM,
+      minZoom: MAP_ZOOM,
+      maxZoom: MAP_ZOOM,
       zoomControl: false,
       scrollWheelZoom: false,
       doubleClickZoom: false,
       touchZoom: false,
       boxZoom: false,
       keyboard: false,
-      dragging: true,
+
+      tap: false,
     });
 
     mapRef.current = map;
 
     // ========================================================
-    // SATELLITE LAYER
+    // SATELLITE IMAGERY
     // ========================================================
 
-    const satelliteLayer = L.tileLayer(SATELLITE_URL, {
+    L.tileLayer(SATELLITE_URL, {
       attribution:
         "Tiles &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community",
       maxZoom: 19,
-    });
+    }).addTo(map);
 
     // ========================================================
-    // ROAD LABELS LAYER
+    // ROAD LABELS
     // ========================================================
 
-    const labelsLayer = L.tileLayer(LABELS_URL, {
+    L.tileLayer(LABELS_URL, {
       attribution: "Esri",
       maxZoom: 19,
       opacity: 0.9,
-    });
+    }).addTo(map);
 
     // ========================================================
-    // STANDARD STREET MAP
-    // ========================================================
-
-    const streetLayer = L.tileLayer(STREET_URL, {
-      attribution: "&copy; OpenStreetMap contributors",
-      maxZoom: 19,
-    });
-
-    layersRef.current = {
-      satellite: satelliteLayer,
-      labels: labelsLayer,
-      street: streetLayer,
-    };
-
-    // DEFAULT MAP STYLE
-
-    satelliteLayer.addTo(map);
-    labelsLayer.addTo(map);
-
-    // ZOOM CONTROL
-
-    L.control
-      .zoom({
-        position: "topright",
-      })
-      .addTo(map);
-
-    // ========================================================
-    // FIXED STARTING LOCATION
+    // DEFAULT STARTING MARKER
     // ========================================================
 
     const startMarker = L.marker([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], {
       icon: createIcon("#2563eb"),
     }).addTo(map);
 
-    startMarker.bindPopup(`
-      <strong>${DEFAULT_LOCATION.name}</strong><br/>
-      Starting Location<br/>
-      ${DEFAULT_LOCATION.lat}, ${DEFAULT_LOCATION.lng}
-    `);
+    startMarker
+      .bindPopup(
+        `<strong>${DEFAULT_LOCATION.name}</strong><br/>Starting Location`,
+      )
+      .openPopup();
 
-    startMarker.openPopup();
+    startMarkerRef.current = startMarker;
 
     // ========================================================
-    // DESTINATION SELECTION
+    // DESTINATION SELECTION AND WALKING ROUTE
     // ========================================================
 
     const handleMapClick = async (event) => {
       const destination = event.latlng;
+      const startLocation = activeStartRef.current;
       const currentRequestId = ++requestIdRef.current;
 
       setLoading(true);
       setError("");
       setRouteInfo(null);
 
-      // REMOVE PREVIOUS ROUTE
+      // Remove previous route
 
       if (routeLayerRef.current) {
         map.removeLayer(routeLayerRef.current);
         routeLayerRef.current = null;
       }
 
-      // REMOVE PREVIOUS DESTINATION
+      // Remove previous destination
 
       if (destinationMarkerRef.current) {
         map.removeLayer(destinationMarkerRef.current);
         destinationMarkerRef.current = null;
       }
 
-      // ADD DESTINATION MARKER
+      // Add destination marker
 
       const destinationMarker = L.marker([destination.lat, destination.lng], {
         icon: createIcon("#dc2626"),
@@ -189,53 +273,73 @@ function Map({ selectedPath = "default" }) {
 
       destinationMarker
         .bindPopup(
-          `
-        <strong>Destination</strong><br/>
-        Latitude: ${destination.lat.toFixed(6)}<br/>
-        Longitude: ${destination.lng.toFixed(6)}
-      `,
+          `<strong>Destination</strong><br/>Latitude: ${destination.lat.toFixed(6)}<br/>Longitude: ${destination.lng.toFixed(6)}`,
         )
         .openPopup();
 
       destinationMarkerRef.current = destinationMarker;
 
       // ======================================================
-      // OSRM ROAD ROUTING
+      // VALHALLA WALKING ROUTING
       // ======================================================
 
       try {
-        const url =
-          `${OSRM_URL}/` +
-          `${DEFAULT_LOCATION.lng},${DEFAULT_LOCATION.lat};` +
-          `${destination.lng},${destination.lat}` +
-          "?overview=full&geometries=geojson";
+        const requestBody = {
+          locations: [
+            {
+              lat: startLocation.lat,
+              lon: startLocation.lng,
+            },
+            {
+              lat: destination.lat,
+              lon: destination.lng,
+            },
+          ],
+          costing: "pedestrian",
+          units: "km",
+          shape_format: "polyline6",
+        };
 
-        const response = await fetch(url);
+        const response = await fetch(VALHALLA_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        });
 
         if (!response.ok) {
-          throw new Error("Unable to calculate road route.");
+          throw new Error(
+            "Unable to calculate walking directions. Please try again.",
+          );
         }
 
         const data = await response.json();
 
-        // IGNORE OUTDATED REQUESTS
+        // Ignore outdated requests
 
         if (currentRequestId !== requestIdRef.current) return;
 
-        if (data.code !== "Ok" || !data.routes?.length) {
-          throw new Error("No available road route to this destination.");
+        if (!data.trip || !data.trip.legs || !data.trip.legs.length) {
+          throw new Error("No available walking route to this destination.");
         }
 
-        const route = data.routes[0];
+        const summary = data.trip.summary;
+        const encodedShape = data.trip.legs[0].shape;
 
-        // CONVERT COORDINATES
+        if (!summary || !encodedShape || typeof encodedShape !== "string") {
+          throw new Error("The walking route response was incomplete.");
+        }
 
-        const coordinates = route.geometry.coordinates.map(([lng, lat]) => [
-          lat,
-          lng,
-        ]);
+        // Decode route coordinates
 
-        // DRAW ROUTE
+        const coordinates = decodePolyline6(encodedShape);
+
+        if (!coordinates.length) {
+          throw new Error("Unable to display the walking route.");
+        }
+
+        // Draw walking route
 
         const routeLayer = L.polyline(coordinates, {
           color: "#2563eb",
@@ -247,21 +351,27 @@ function Map({ selectedPath = "default" }) {
 
         routeLayerRef.current = routeLayer;
 
-        // FIT ROUTE TO MAP
+        // Keep map fixed at its current zoom and center
 
-        map.fitBounds(routeLayer.getBounds(), {
-          padding: [60, 60],
-        });
+        const distance = Number(summary.length);
+        const duration = Number(summary.time);
 
-        // ROUTE DETAILS
+        if (!Number.isFinite(distance) || !Number.isFinite(duration)) {
+          throw new Error(
+            "Unable to calculate walking distance or arrival time.",
+          );
+        }
+
+        // Show route information inside the map
 
         setRouteInfo({
-          distance: (route.distance / 1000).toFixed(2),
-          duration: Math.ceil(route.duration / 60),
+          distance: distance.toFixed(2),
+          durationText: formatDuration(duration),
+          arrival: formatArrivalTime(duration),
         });
       } catch (err) {
         if (currentRequestId === requestIdRef.current) {
-          setError(err.message || "Route calculation failed.");
+          setError(err.message || "Walking route calculation failed.");
         }
       } finally {
         if (currentRequestId === requestIdRef.current) {
@@ -272,7 +382,7 @@ function Map({ selectedPath = "default" }) {
 
     map.on("click", handleMapClick);
 
-    // FIX LEAFLET DIMENSIONS
+    // Fix Leaflet dimensions
 
     setTimeout(() => {
       map.invalidateSize();
@@ -291,72 +401,77 @@ function Map({ selectedPath = "default" }) {
       mapRef.current = null;
       routeLayerRef.current = null;
       destinationMarkerRef.current = null;
-      layersRef.current = {};
+      startMarkerRef.current = null;
     };
   }, []);
 
   // ==========================================================
-  // MAP STYLE SWITCHING
+  // MY CURRENT LOCATION
   // ==========================================================
 
-  useEffect(() => {
-    const map = mapRef.current;
-    const layers = layersRef.current;
-
-    if (!map || !layers.satellite) return;
-
-    // REMOVE ALL BASE LAYERS
-
-    Object.values(layers).forEach((layer) => {
-      if (map.hasLayer(layer)) {
-        map.removeLayer(layer);
-      }
-    });
-
-    // SATELLITE ONLY
-
-    if (mapStyle === "satellite") {
-      layers.satellite.addTo(map);
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Your browser does not support location services.");
+      return;
     }
 
-    // SATELLITE WITH ROAD LABELS
-    else if (mapStyle === "satellite-labels") {
-      layers.satellite.addTo(map);
-      layers.labels.addTo(map);
-    }
+    setLocationLoading(true);
+    setError("");
 
-    // STANDARD STREET MAP
-    else if (mapStyle === "street") {
-      layers.street.addTo(map);
-    }
-  }, [mapStyle]);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const currentLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          name: "My Current Location",
+        };
+
+        updateStartingLocation(
+          currentLocation,
+          "current",
+          "My Current Location",
+        );
+
+        setLocationLoading(false);
+      },
+      (err) => {
+        let message = "Unable to get your current location.";
+
+        if (err.code === 1) {
+          message =
+            "Location permission denied. Please allow location access in your browser.";
+        } else if (err.code === 2) {
+          message =
+            "Your current location is unavailable. Please check your device GPS.";
+        } else if (err.code === 3) {
+          message = "Location request timed out. Please try again.";
+        }
+
+        setError(message);
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      },
+    );
+  };
+
+  // ==========================================================
+  // RETURN TO DEFAULT LOCATION
+  // ==========================================================
+
+  const useDefaultLocation = () => {
+    updateStartingLocation(DEFAULT_LOCATION, "default", DEFAULT_LOCATION.name);
+  };
 
   // ==========================================================
   // RESET MAP
   // ==========================================================
 
   const resetMap = () => {
-    const map = mapRef.current;
-
-    if (!map) return;
-
-    requestIdRef.current++;
-
-    if (routeLayerRef.current) {
-      map.removeLayer(routeLayerRef.current);
-      routeLayerRef.current = null;
-    }
-
-    if (destinationMarkerRef.current) {
-      map.removeLayer(destinationMarkerRef.current);
-      destinationMarkerRef.current = null;
-    }
-
-    setRouteInfo(null);
-    setError("");
-    setLoading(false);
-
-    map.setView([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], 18);
+    useDefaultLocation();
   };
 
   // ==========================================================
@@ -373,7 +488,7 @@ function Map({ selectedPath = "default" }) {
             Satellite Location Map
           </h2>
           <p className="text-xs text-gray-500">
-            Select a destination by clicking anywhere on the map.
+            Click anywhere on the map to select a walking destination.
           </p>
         </div>
 
@@ -386,32 +501,36 @@ function Map({ selectedPath = "default" }) {
         </button>
       </div>
 
-      {/* MAP STYLE SELECTOR */}
+      {/* LOCATION SWITCHING */}
 
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => setMapStyle("satellite")}
-          className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${mapStyle === "satellite" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+          onClick={useCurrentLocation}
+          disabled={locationLoading}
+          className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${startMode === "current" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"} disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          Satellite
+          {locationLoading ? "Getting Location..." : "My Location"}
         </button>
 
         <button
           type="button"
-          onClick={() => setMapStyle("satellite-labels")}
-          className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${mapStyle === "satellite-labels" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+          onClick={useDefaultLocation}
+          disabled={locationLoading}
+          className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${startMode === "default" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"} disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          Satellite + Labels
+          Default Location
         </button>
+      </div>
 
-        <button
-          type="button"
-          onClick={() => setMapStyle("street")}
-          className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${mapStyle === "street" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
-        >
-          Street Map
-        </button>
+      {/* ACTIVE STARTING LOCATION */}
+
+      <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+        <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
+        <div>
+          <p className="text-xs text-gray-500">Route Starting Point</p>
+          <p className="text-sm font-semibold text-blue-800">{startLabel}</p>
+        </div>
       </div>
 
       {/* MAP CONTAINER */}
@@ -419,32 +538,53 @@ function Map({ selectedPath = "default" }) {
       <div className="relative w-full h-[500px] rounded-xl overflow-hidden border border-gray-200 shadow-sm z-0">
         <div ref={mapContainerRef} className="w-full h-full" />
 
+        {/* LOADING INDICATOR */}
+
         {loading && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white px-4 py-2 rounded-lg shadow-md text-sm font-medium text-blue-600">
-            Calculating road route...
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white px-4 py-2 rounded-lg shadow-md text-sm font-medium text-blue-600 whitespace-nowrap">
+            Calculating walking route...
+          </div>
+        )}
+
+        {/* ROUTE INFORMATION OVERLAY */}
+
+        {routeInfo && !loading && (
+          <div className="absolute bottom-3 left-3 right-3 z-[1000] pointer-events-auto w-72 lg:w-96">
+            <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-200 p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500 mb-1">Walking Distance</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {routeInfo.distance} km
+                  </p>
+                </div>
+
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500 mb-1">
+                    Est. Walking Time
+                  </p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {routeInfo.durationText}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                <p className="text-xs text-blue-600 font-medium">
+                  Estimated Arrival Time
+                </p>
+                <p className="text-2xl font-bold text-blue-800">
+                  {routeInfo.arrival}
+                </p>
+              </div>
+
+              <p className="text-[11px] text-gray-400 mt-3">
+                Based on the estimated pedestrian route duration.
+              </p>
+            </div>
           </div>
         )}
       </div>
-
-      {/* ROUTE INFORMATION */}
-
-      {routeInfo && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 bg-white border border-gray-200 rounded-xl">
-            <p className="text-xs text-gray-500">Total Distance</p>
-            <p className="text-xl font-semibold text-gray-800">
-              {routeInfo.distance} km
-            </p>
-          </div>
-
-          <div className="p-4 bg-white border border-gray-200 rounded-xl">
-            <p className="text-xs text-gray-500">Estimated Travel Time</p>
-            <p className="text-xl font-semibold text-gray-800">
-              {routeInfo.duration} minutes
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ERROR MESSAGE */}
 
@@ -469,14 +609,15 @@ function Map({ selectedPath = "default" }) {
 
         <div className="flex items-center gap-2">
           <span className="w-6 h-1 rounded bg-blue-600" />
-          Road Route
+          Walking Route
         </div>
       </div>
 
       {/* COORDINATES */}
 
       <p className="text-xs text-gray-400">
-        Starting coordinates: {DEFAULT_LOCATION.lat}, {DEFAULT_LOCATION.lng}
+        Starting coordinates: {activeStartRef.current.lat.toFixed(6)},{" "}
+        {activeStartRef.current.lng.toFixed(6)}
       </p>
     </div>
   );
