@@ -837,7 +837,7 @@ function Map({ selectedPath = "default" }) {
 
               {/* DESTINATION COORDINATES */}
 
-              <div className="mb-3 rounded-lg bg-gray-50 p-3">
+              {/* <div className="mb-3 rounded-lg bg-gray-50 p-3">
                 <p className="text-xs font-semibold text-gray-500">
                   DESTINATION COORDINATES
                 </p>
@@ -858,7 +858,7 @@ function Map({ selectedPath = "default" }) {
                   </span>
                 </div>
 
-                {/* COPY COORDINATES */}
+               
 
                 <button
                   type="button"
@@ -873,7 +873,7 @@ function Map({ selectedPath = "default" }) {
                 >
                   Copy Coordinates
                 </button>
-              </div>
+              </div> */}
 
               {/* ROUTE STATUS */}
 
@@ -909,10 +909,10 @@ function Map({ selectedPath = "default" }) {
                   Waiting for walking route information...
                 </p>
               )}
-
+              {/* 
               <p className="mt-3 text-xs text-gray-400">
                 Based on the estimated pedestrian route duration.
-              </p>
+              </p> */}
 
               {/* CLEAR CUSTOM DESTINATION */}
 
