@@ -32,7 +32,7 @@ const navSections = [
       { label: "Clinic Path", mapPath: "clinic" },
       { label: "Registrar Path", mapPath: "registrar" },
       { label: "Library Path", mapPath: "library" },
-      { label: "BIT Building", mapPath: "bit" },
+      { label: "BIT Program Office", mapPath: "bit" },
       { label: "CAD Laboratory", mapPath: "cadlab" },
       { label: "Canteen", mapPath: "canteen" },
       { label: "CH 3", mapPath: "ch3" },
