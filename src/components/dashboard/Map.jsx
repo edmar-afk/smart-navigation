@@ -1,882 +1,483 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useRef, useState } from "react";
-
-import { Eye } from "lucide-react";
-
-// ============================================================
-
-// MAP IMAGES
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // ============================================================
-
-import mapImg from "../../assets/images/map.png";
-
-import registrarMap from "../../assets/images/registrarMap.png";
-
-import libraryMap from "../../assets/images/libraryMap.png";
-
-import clinicMap from "../../assets/images/clinicMap.png";
-
-import bit from "../../assets/images/bit.png";
-
-import cadlab from "../../assets/images/cadlab.png";
-
-import canteenMap from "../../assets/images/canteen.png";
-
-import ch3 from "../../assets/images/ch3.png";
-
-import ch4567 from "../../assets/images/ch4567.png";
-
-import disaster from "../../assets/images/disaster.png";
-
-import drawingRoom from "../../assets/images/drawingRoom.png";
-
-import facultyRoom from "../../assets/images/facultyRoom.png";
-
-import guidance from "../../assets/images/guidance.png";
-
-import hrod from "../../assets/images/hrod.png";
-
-import lab1 from "../../assets/images/lab1.png";
-
-import lab2 from "../../assets/images/lab2.png";
-
-import mis from "../../assets/images/mis.png";
-
-import qaoMap from "../../assets/images/qao.png";
-
-// ============================================================
-
-// LOCATION IMAGES
-
-// ============================================================
-
-import canteen from "../../assets/images/paths/canteen.jpg";
-
-import adminssionScholar from "../../assets/images/paths/admission-scholar.jpg";
-
-import BitProgramChair from "../../assets/images/paths/bit-program-chair.jpg";
-
-import cashiering from "../../assets/images/paths/cashiering.jpg";
-
-import facultyroom from "../../assets/images/paths/facultyroom.jpg";
-
-import library from "../../assets/images/paths/library.jpg";
-
-import misOffice from "../../assets/images/paths/mis-office.jpg";
-
-import qao from "../../assets/images/paths/qao.jpg";
-
-import registrar from "../../assets/images/paths/registrar.jpg";
-
-import researchExtension from "../../assets/images/paths/research-extension.jpg";
-
-import schoolClinic from "../../assets/images/paths/school-clinic.jpg";
-
-// ============================================================
-
 // MAP CONFIGURATION
-
 // ============================================================
 
-const maps = {
-  default: mapImg,
-
-  clinic: clinicMap,
-
-  registrar: registrarMap,
-
-  library: libraryMap,
-
-  bit: bit,
-
-  cadlab: cadlab,
-
-  canteen: canteenMap,
-
-  ch3: ch3,
-
-  ch4567: ch4567,
-
-  disaster: disaster,
-
-  drawingRoom: drawingRoom,
-
-  facultyRoom: facultyRoom,
-
-  guidance: guidance,
-
-  hrod: hrod,
-
-  lab1: lab1,
-
-  lab2: lab2,
-
-  mis: mis,
-
-  qao: qaoMap,
+const DEFAULT_LOCATION = {
+  lat: 7.850005,
+  lng: 123.185847,
+  name: "Default Location",
 };
 
-const mapLabels = {
-  default: "Office Map",
-
-  clinic: "Clinic Path",
-
-  registrar: "Registrar Path",
-
-  library: "Library Path",
-
-  bit: "BIT Building",
-
-  cadlab: "CAD Laboratory",
-
-  canteen: "Canteen",
-
-  ch3: "CH 3",
-
-  ch4567: "CH 4, 5, 6 and 7",
-
-  disaster: "Disaster Risk Reduction",
-
-  drawingRoom: "Drawing Room",
-
-  facultyRoom: "Faculty Room",
-
-  guidance: "Guidance Office",
-
-  hrod: "Human Resource Office",
-
-  lab1: "Laboratory 1",
-
-  lab2: "Laboratory 2",
-
-  mis: "MIS Office",
-
-  qao: "Quality Assurance Office",
-};
+const OSRM_URL = "https://router.project-osrm.org/route/v1/driving";
 
 // ============================================================
-
-// SHARED MARKERS
-
-// These markers appear on ALL maps.
-
+// MAP ICONS
 // ============================================================
 
-const sharedMarkers = [
-  {
-    id: 1,
-
-    name: "Canteen",
-
-    image: canteen,
-
-    x: 26.5,
-
-    y: 73.5,
-
-    width: 80,
-
-    height: 60,
-  },
-
-  {
-    id: 2,
-
-    name: "Admission and Scholarship",
-
-    image: adminssionScholar,
-
-    x: 23.8,
-
-    y: 51,
-
-    width: 50,
-
-    height: 120,
-  },
-
-  {
-    id: 3,
-
-    name: "BIT Program Chair",
-
-    image: BitProgramChair,
-
-    x: 80.5,
-
-    y: 19,
-
-    width: 78,
-
-    height: 100,
-  },
-
-  {
-    id: 4,
-
-    name: "Cashiering",
-
-    image: cashiering,
-
-    x: 13.6,
-
-    y: 51,
-
-    width: 50,
-
-    height: 120,
-  },
-
-  {
-    id: 5,
-
-    name: "Faculty Room",
-
-    image: facultyroom,
-
-    x: 69.7,
-
-    y: 19,
-
-    width: 80,
-
-    height: 100,
-  },
-
-  {
-    id: 6,
-
-    name: "Library",
-
-    image: library,
-
-    x: 44,
-
-    y: 51,
-
-    width: 50,
-
-    height: 120,
-  },
-
-  {
-    id: 7,
-
-    name: "MIS Office",
-
-    image: misOffice,
-
-    x: 30.5,
-
-    y: 51,
-
-    width: 50,
-
-    height: 120,
-  },
-
-  {
-    id: 8,
-
-    name: "Quality Assurance Office",
-
-    image: qao,
-
-    x: 60.5,
-
-    y: 19.5,
-
-    width: 70,
-
-    height: 78,
-  },
-
-  {
-    id: 9,
-
-    name: "Registrar",
-
-    image: registrar,
-
-    x: 20.4,
-
-    y: 51,
-
-    width: 50,
-
-    height: 120,
-  },
-
-  {
-    id: 10,
-
-    name: "Research and Extension",
-
-    image: researchExtension,
-
-    x: 16,
-
-    y: 71.5,
-
-    width: 100,
-
-    height: 90,
-  },
-
-  {
-    id: 11,
-
-    name: "School Clinic",
-
-    image: schoolClinic,
-
-    x: 17,
-
-    y: 51,
-
-    width: 50,
-
-    height: 120,
-  },
-];
+const createIcon = (color) =>
+  L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width: 22px;
+        height: 22px;
+        background: ${color};
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      "></div>
+    `,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+  });
 
 // ============================================================
-
-// CUSTOM MARKERS
-
-// Only add markers here when a map needs additional locations.
-
-// These are combined with the shared markers automatically.
-
+// TILE LAYERS
 // ============================================================
 
-const customMarkers = {
-  default: [],
+const SATELLITE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
-  clinic: [
-    // Add clinic-specific markers here.
-  ],
+const LABELS_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
 
-  registrar: [
-    // Add registrar-specific markers here.
-  ],
-
-  library: [
-    // Add library-specific markers here.
-  ],
-
-  bit: [],
-
-  cadlab: [],
-
-  canteen: [],
-
-  ch3: [],
-
-  ch4567: [],
-
-  disaster: [],
-
-  drawingRoom: [],
-
-  facultyRoom: [],
-
-  guidance: [],
-
-  hrod: [],
-
-  lab1: [],
-
-  lab2: [],
-
-  mis: [],
-
-  qao: [],
-};
+const STREET_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 // ============================================================
-
 // MAP COMPONENT
-
 // ============================================================
 
 function Map({ selectedPath = "default" }) {
-  const containerRef = useRef(null);
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
 
-  const isDown = useRef(false);
+  const routeLayerRef = useRef(null);
+  const destinationMarkerRef = useRef(null);
+  const requestIdRef = useRef(0);
 
-  const startX = useRef(0);
+  const layersRef = useRef({});
 
-  const startY = useRef(0);
+  const [routeInfo, setRouteInfo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const scrollLeft = useRef(0);
+  const [mapStyle, setMapStyle] = useState("satellite-labels");
 
-  const scrollTop = useRef(0);
+  // ==========================================================
+  // INITIALIZE MAP
+  // ==========================================================
 
-  const [scale, setScale] = useState(1);
-
-  const [activeImage, setActiveImage] = useState(null);
-  // Reset the map view whenever a different map is selected in the sidebar.
   useEffect(() => {
-    setScale(1);
-    setActiveImage(null);
-    isDown.current = false;
+    if (!mapContainerRef.current || mapRef.current) return;
 
-    if (containerRef.current) {
-      containerRef.current.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: "smooth",
-      });
+    const map = L.map(mapContainerRef.current, {
+      center: [DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng],
+      zoom: 19,
+      minZoom: 19,
+      maxZoom: 19,
+      zoomControl: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      dragging: true,
+    });
+
+    mapRef.current = map;
+
+    // ========================================================
+    // SATELLITE LAYER
+    // ========================================================
+
+    const satelliteLayer = L.tileLayer(SATELLITE_URL, {
+      attribution:
+        "Tiles &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+      maxZoom: 19,
+    });
+
+    // ========================================================
+    // ROAD LABELS LAYER
+    // ========================================================
+
+    const labelsLayer = L.tileLayer(LABELS_URL, {
+      attribution: "Esri",
+      maxZoom: 19,
+      opacity: 0.9,
+    });
+
+    // ========================================================
+    // STANDARD STREET MAP
+    // ========================================================
+
+    const streetLayer = L.tileLayer(STREET_URL, {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19,
+    });
+
+    layersRef.current = {
+      satellite: satelliteLayer,
+      labels: labelsLayer,
+      street: streetLayer,
+    };
+
+    // DEFAULT MAP STYLE
+
+    satelliteLayer.addTo(map);
+    labelsLayer.addTo(map);
+
+    // ZOOM CONTROL
+
+    L.control
+      .zoom({
+        position: "topright",
+      })
+      .addTo(map);
+
+    // ========================================================
+    // FIXED STARTING LOCATION
+    // ========================================================
+
+    const startMarker = L.marker([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], {
+      icon: createIcon("#2563eb"),
+    }).addTo(map);
+
+    startMarker.bindPopup(`
+      <strong>${DEFAULT_LOCATION.name}</strong><br/>
+      Starting Location<br/>
+      ${DEFAULT_LOCATION.lat}, ${DEFAULT_LOCATION.lng}
+    `);
+
+    startMarker.openPopup();
+
+    // ========================================================
+    // DESTINATION SELECTION
+    // ========================================================
+
+    const handleMapClick = async (event) => {
+      const destination = event.latlng;
+      const currentRequestId = ++requestIdRef.current;
+
+      setLoading(true);
+      setError("");
+      setRouteInfo(null);
+
+      // REMOVE PREVIOUS ROUTE
+
+      if (routeLayerRef.current) {
+        map.removeLayer(routeLayerRef.current);
+        routeLayerRef.current = null;
+      }
+
+      // REMOVE PREVIOUS DESTINATION
+
+      if (destinationMarkerRef.current) {
+        map.removeLayer(destinationMarkerRef.current);
+        destinationMarkerRef.current = null;
+      }
+
+      // ADD DESTINATION MARKER
+
+      const destinationMarker = L.marker([destination.lat, destination.lng], {
+        icon: createIcon("#dc2626"),
+      }).addTo(map);
+
+      destinationMarker
+        .bindPopup(
+          `
+        <strong>Destination</strong><br/>
+        Latitude: ${destination.lat.toFixed(6)}<br/>
+        Longitude: ${destination.lng.toFixed(6)}
+      `,
+        )
+        .openPopup();
+
+      destinationMarkerRef.current = destinationMarker;
+
+      // ======================================================
+      // OSRM ROAD ROUTING
+      // ======================================================
+
+      try {
+        const url =
+          `${OSRM_URL}/` +
+          `${DEFAULT_LOCATION.lng},${DEFAULT_LOCATION.lat};` +
+          `${destination.lng},${destination.lat}` +
+          "?overview=full&geometries=geojson";
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error("Unable to calculate road route.");
+        }
+
+        const data = await response.json();
+
+        // IGNORE OUTDATED REQUESTS
+
+        if (currentRequestId !== requestIdRef.current) return;
+
+        if (data.code !== "Ok" || !data.routes?.length) {
+          throw new Error("No available road route to this destination.");
+        }
+
+        const route = data.routes[0];
+
+        // CONVERT COORDINATES
+
+        const coordinates = route.geometry.coordinates.map(([lng, lat]) => [
+          lat,
+          lng,
+        ]);
+
+        // DRAW ROUTE
+
+        const routeLayer = L.polyline(coordinates, {
+          color: "#2563eb",
+          weight: 6,
+          opacity: 0.9,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(map);
+
+        routeLayerRef.current = routeLayer;
+
+        // FIT ROUTE TO MAP
+
+        map.fitBounds(routeLayer.getBounds(), {
+          padding: [60, 60],
+        });
+
+        // ROUTE DETAILS
+
+        setRouteInfo({
+          distance: (route.distance / 1000).toFixed(2),
+          duration: Math.ceil(route.duration / 60),
+        });
+      } catch (err) {
+        if (currentRequestId === requestIdRef.current) {
+          setError(err.message || "Route calculation failed.");
+        }
+      } finally {
+        if (currentRequestId === requestIdRef.current) {
+          setLoading(false);
+        }
+      }
+    };
+
+    map.on("click", handleMapClick);
+
+    // FIX LEAFLET DIMENSIONS
+
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
+    // ========================================================
+    // CLEANUP
+    // ========================================================
+
+    return () => {
+      requestIdRef.current++;
+
+      map.off("click", handleMapClick);
+      map.remove();
+
+      mapRef.current = null;
+      routeLayerRef.current = null;
+      destinationMarkerRef.current = null;
+      layersRef.current = {};
+    };
+  }, []);
+
+  // ==========================================================
+  // MAP STYLE SWITCHING
+  // ==========================================================
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const layers = layersRef.current;
+
+    if (!map || !layers.satellite) return;
+
+    // REMOVE ALL BASE LAYERS
+
+    Object.values(layers).forEach((layer) => {
+      if (map.hasLayer(layer)) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // SATELLITE ONLY
+
+    if (mapStyle === "satellite") {
+      layers.satellite.addTo(map);
     }
-  }, [selectedPath]);
 
-  const minScale = 0.9;
+    // SATELLITE WITH ROAD LABELS
+    else if (mapStyle === "satellite-labels") {
+      layers.satellite.addTo(map);
+      layers.labels.addTo(map);
+    }
 
-  const maxScale = 3;
+    // STANDARD STREET MAP
+    else if (mapStyle === "street") {
+      layers.street.addTo(map);
+    }
+  }, [mapStyle]);
 
-  const step = 0.1;
+  // ==========================================================
+  // RESET MAP
+  // ==========================================================
 
-  // ============================================================
+  const resetMap = () => {
+    const map = mapRef.current;
 
-  // GET MARKERS FOR SELECTED MAP
+    if (!map) return;
 
-  // ============================================================
+    requestIdRef.current++;
 
-  const currentMarkers = [
-    ...sharedMarkers,
+    if (routeLayerRef.current) {
+      map.removeLayer(routeLayerRef.current);
+      routeLayerRef.current = null;
+    }
 
-    ...(customMarkers[selectedPath] || []),
-  ];
+    if (destinationMarkerRef.current) {
+      map.removeLayer(destinationMarkerRef.current);
+      destinationMarkerRef.current = null;
+    }
 
-  // ============================================================
+    setRouteInfo(null);
+    setError("");
+    setLoading(false);
 
-  // ZOOM
-
-  // ============================================================
-
-  const zoomIn = () => {
-    setScale((prev) => Math.min(prev + step, maxScale));
+    map.setView([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], 18);
   };
 
-  const zoomOut = () => {
-    setScale((prev) => Math.max(prev - step, minScale));
-  };
-
-  // ============================================================
-
-  // DRAG MAP
-
-  // ============================================================
-
-  const onPointerDown = (e) => {
-    // Do not drag when clicking a marker.
-
-    if (e.target.closest(".map-marker")) return;
-
-    if (e.button !== 0) return;
-
-    isDown.current = true;
-
-    containerRef.current.setPointerCapture(e.pointerId);
-
-    startX.current = e.clientX;
-
-    startY.current = e.clientY;
-
-    scrollLeft.current = containerRef.current.scrollLeft;
-
-    scrollTop.current = containerRef.current.scrollTop;
-  };
-
-  const onPointerMove = (e) => {
-    if (!isDown.current) return;
-
-    e.preventDefault();
-
-    const dx = e.clientX - startX.current;
-
-    const dy = e.clientY - startY.current;
-
-    containerRef.current.scrollLeft = scrollLeft.current - dx;
-
-    containerRef.current.scrollTop = scrollTop.current - dy;
-  };
-
-  const onPointerUp = () => {
-    isDown.current = false;
-  };
-
-  // ============================================================
-
-  // IMAGE MODAL
-
-  // ============================================================
-
-  const closeModal = () => {
-    setActiveImage(null);
-  };
-
-  // ============================================================
-
+  // ==========================================================
   // RENDER
-
-  // ============================================================
+  // ==========================================================
 
   return (
     <div className="w-full relative space-y-4">
-      {/* ====================================================== */}
+      {/* HEADER */}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-800">
+            Satellite Location Map
+          </h2>
+          <p className="text-xs text-gray-500">
+            Select a destination by clicking anywhere on the map.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={resetMap}
+          className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition"
+        >
+          Reset Map
+        </button>
+      </div>
+
+      {/* MAP STYLE SELECTOR */}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setMapStyle("satellite")}
+          className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${mapStyle === "satellite" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+        >
+          Satellite
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMapStyle("satellite-labels")}
+          className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${mapStyle === "satellite-labels" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+        >
+          Satellite + Labels
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMapStyle("street")}
+          className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${mapStyle === "street" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}
+        >
+          Street Map
+        </button>
+      </div>
 
       {/* MAP CONTAINER */}
 
-      {/* ====================================================== */}
+      <div className="relative w-full h-[500px] rounded-xl overflow-hidden border border-gray-200 shadow-sm z-0">
+        <div ref={mapContainerRef} className="w-full h-full" />
 
-      <div
-        ref={containerRef}
-        className="
-
-          relative
-
-          h-[500px]
-
-          overflow-auto
-
-          border
-
-          rounded-xl
-
-          cursor-grab
-
-          active:cursor-grabbing
-
-          touch-pan-x
-
-          touch-pan-y
-
-          hide-scrollbar
-
-        "
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
-        {/* MAP WRAPPER */}
-
-        <div
-          className="relative w-[1500px] max-w-none"
-          style={{
-            transform: `scale(${scale})`,
-
-            transformOrigin: "top left",
-          }}
-        >
-          {/* MAP IMAGE */}
-
-          <img
-            src={maps[selectedPath]}
-            alt={mapLabels[selectedPath]}
-            className="block w-[1500px] h-auto select-none pointer-events-none"
-            draggable={false}
-          />
-
-          {/* ================================================== */}
-
-          {/* MAP MARKERS */}
-
-          {/* ================================================== */}
-
-          {currentMarkers.map((marker) => (
-            <button
-              key={`${selectedPath}-${marker.id}-${marker.name}`}
-              type="button"
-              className="
-
-                map-marker
-
-                absolute
-
-                z-20
-
-                flex
-
-                items-center
-
-                justify-center
-
-                bg-white/10
-
-                border
-
-                border-transparent
-
-                rounded-md
-
-                hover:bg-white/80
-
-                hover:border-blue-500
-
-                transition-all
-
-                duration-200
-
-                cursor-pointer
-
-                group
-
-              "
-              style={{
-                left: `${marker.x}%`,
-
-                top: `${marker.y}%`,
-
-                width: `${marker.width}px`,
-
-                height: `${marker.height}px`,
-
-                transform: "translate(-50%, -50%)",
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => setActiveImage(marker)}
-              title={marker.name}
-            >
-              <Eye
-                size={22}
-                strokeWidth={2.5}
-                className="
-
-                  text-blue-600
-
-                  opacity-0
-
-                  group-hover:opacity-100
-
-                  transition-opacity
-
-                  duration-200
-
-                "
-              />
-            </button>
-          ))}
-        </div>
+        {loading && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white px-4 py-2 rounded-lg shadow-md text-sm font-medium text-blue-600">
+            Calculating road route...
+          </div>
+        )}
       </div>
 
-      {/* ====================================================== */}
-
-      {/* ZOOM CONTROLS */}
-
-      {/* ====================================================== */}
-
-      <div className="absolute top-[75px] right-4 flex flex-col gap-2 z-50">
-        <button
-          type="button"
-          onClick={zoomIn}
-          className="
-
-            bg-white
-
-            shadow
-
-            px-3
-
-            py-1
-
-            rounded-lg
-
-            text-lg
-
-            font-bold
-
-            hover:bg-gray-100
-
-          "
-        >
-          +
-        </button>
-
-        <button
-          type="button"
-          onClick={zoomOut}
-          className="
-
-            bg-white
-
-            shadow
-
-            px-3
-
-            py-1
-
-            rounded-lg
-
-            text-lg
-
-            font-bold
-
-            hover:bg-gray-100
-
-          "
-        >
-          −
-        </button>
-      </div>
-
-      {/* ====================================================== */}
-
-      {/* MAP LABEL */}
-
-      {/* ====================================================== */}
-
-      <div
-        className="
-
-          absolute
-
-          bottom-4
-
-          left-4
-
-          bg-white
-
-          p-2
-
-          rounded-lg
-
-          shadow
-
-          z-30
-
-          pointer-events-none
-
-        "
-      >
-        <p className="text-sm font-medium">{mapLabels[selectedPath]}</p>
-      </div>
-
-      {/* ====================================================== */}
-
-      {/* IMAGE MODAL */}
-
-      {/* ====================================================== */}
-
-      {activeImage && (
-        <div
-          className="
-
-            fixed
-
-            inset-0
-
-            z-[100]
-
-            bg-black/70
-
-            flex
-
-            items-center
-
-            justify-center
-
-            p-4
-
-          "
-          onClick={closeModal}
-        >
-          <div
-            className="
-
-              relative
-
-              bg-white
-
-              rounded-xl
-
-              shadow-2xl
-
-              w-full
-
-              max-w-3xl
-
-              max-h-[90vh]
-
-              overflow-hidden
-
-              flex
-
-              flex-col
-
-            "
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* MODAL HEADER */}
-
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="font-semibold text-gray-800 text-base sm:text-lg">
-                {activeImage.name}
-              </h2>
-
-              <button
-                type="button"
-                onClick={closeModal}
-                className="
-
-                  w-8
-
-                  h-8
-
-                  flex
-
-                  items-center
-
-                  justify-center
-
-                  rounded-full
-
-                  bg-gray-100
-
-                  hover:bg-red-100
-
-                  hover:text-red-600
-
-                  text-gray-600
-
-                  text-xl
-
-                  transition
-
-                "
-              >
-                ×
-              </button>
-            </div>
-
-            {/* MODAL IMAGE */}
-
-            <div className="p-3 overflow-auto">
-              <img
-                src={activeImage.image}
-                alt={activeImage.name}
-                className="
-
-                  w-full
-
-                  h-auto
-
-                  max-h-[70vh]
-
-                  object-contain
-
-                  rounded-lg
-
-                  mx-auto
-
-                "
-              />
-            </div>
+      {/* ROUTE INFORMATION */}
+
+      {routeInfo && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-4 bg-white border border-gray-200 rounded-xl">
+            <p className="text-xs text-gray-500">Total Distance</p>
+            <p className="text-xl font-semibold text-gray-800">
+              {routeInfo.distance} km
+            </p>
+          </div>
+
+          <div className="p-4 bg-white border border-gray-200 rounded-xl">
+            <p className="text-xs text-gray-500">Estimated Travel Time</p>
+            <p className="text-xl font-semibold text-gray-800">
+              {routeInfo.duration} minutes
+            </p>
           </div>
         </div>
       )}
+
+      {/* ERROR MESSAGE */}
+
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* MAP LEGEND */}
+
+      <div className="flex flex-wrap items-center gap-5 text-xs text-gray-600">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-blue-600" />
+          Starting Location
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-red-600" />
+          Destination
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-1 rounded bg-blue-600" />
+          Road Route
+        </div>
+      </div>
+
+      {/* COORDINATES */}
+
+      <p className="text-xs text-gray-400">
+        Starting coordinates: {DEFAULT_LOCATION.lat}, {DEFAULT_LOCATION.lng}
+      </p>
     </div>
   );
 }
