@@ -5,6 +5,7 @@ import {
   TileLayer,
   Marker,
   Polyline,
+  Popup,
   useMap,
 } from "react-leaflet";
 
@@ -33,7 +34,7 @@ import misImage from "../../assets/images/paths/mis-office.jpg";
 import qaoImage from "../../assets/images/paths/qao.jpg";
 
 // ============================================================
-// DEFAULT MAP LOCATION 7.850736, 123.184834
+// DEFAULT MAP LOCATION
 // ============================================================
 
 const DEFAULT_LOCATION = {
@@ -165,7 +166,6 @@ function decodePolyline6(encoded) {
     } while (byte >= 0x20 && index < encoded.length);
 
     const deltaLat = result & 1 ? ~(result >> 1) : result >> 1;
-
     lat += deltaLat;
 
     result = 0;
@@ -178,7 +178,6 @@ function decodePolyline6(encoded) {
     } while (byte >= 0x20 && index < encoded.length);
 
     const deltaLng = result & 1 ? ~(result >> 1) : result >> 1;
-
     lng += deltaLng;
 
     coordinates.push([lat / 1000000, lng / 1000000]);
@@ -256,34 +255,34 @@ function formatArrivalTime(seconds) {
 }
 
 // ============================================================
-// SMALL LOCATION MARKER ICON
+// SMALL DESTINATION LOCATION MARKER
 // ============================================================
 
 const destinationLocationIcon = L.divIcon({
   className: "destination-location-marker",
   html: `
     <div style="
-      width: 36px;
-      height: 36px;
+      width: 24px;
+      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #2563eb;
-      border: 3px solid white;
+      border: 2px solid white;
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
-      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
     ">
       <div style="
-        width: 10px;
-        height: 10px;
+        width: 6px;
+        height: 6px;
         background: white;
         border-radius: 50%;
       "></div>
     </div>
   `,
-  iconSize: [36, 36],
-  iconAnchor: [18, 36],
+  iconSize: [24, 24],
+  iconAnchor: [12, 24],
 });
 
 // ============================================================
@@ -402,14 +401,7 @@ function MapController({
 
         onRouteUpdate(newRoute);
 
-        const bounds = L.latLngBounds(routeCoordinates);
-        bounds.extend([destination.lat, destination.lng]);
-
-        map.fitBounds(bounds, {
-          padding: [80, 80],
-          maxZoom: 19,
-          animate: true,
-        });
+        map.flyTo([destination.lat, destination.lng], 18, { duration: 1 });
       } catch (error) {
         if (error.name === "AbortError" || cancelled) return;
 
@@ -457,36 +449,11 @@ function Map({ selectedPath = "default" }) {
 
   const [mapInstance, setMapInstance] = useState(null);
 
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const destination = useMemo(() => {
     if (selectedPath === "default") return null;
 
     return CAMPUS_DESTINATIONS[selectedPath] || null;
   }, [selectedPath]);
-
-  // Close modal when the selected sidebar destination changes.
-  useEffect(() => {
-    setIsModalOpen(false);
-  }, [selectedPath]);
-
-  // Close modal using Escape key.
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setIsModalOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isModalOpen]);
 
   // ----------------------------------------------------------
   // CURRENT LOCATION
@@ -513,7 +480,7 @@ function Map({ selectedPath = "default" }) {
         setLocationLoading(false);
 
         if (mapInstance) {
-          mapInstance.flyTo([newLocation.lat, newLocation.lng], 19, {
+          mapInstance.flyTo([newLocation.lat, newLocation.lng], 18, {
             duration: 1,
           });
         }
@@ -603,6 +570,10 @@ function Map({ selectedPath = "default" }) {
     return [lastCoordinate, [route.destination.lat, route.destination.lng]];
   }, [route]);
 
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
   return (
     <div className="relative w-full">
       {/* ================================================== */}
@@ -613,8 +584,13 @@ function Map({ selectedPath = "default" }) {
         <MapContainer
           center={[DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng]}
           zoom={18}
+          minZoom={18}
+          maxZoom={18}
           zoomControl={false}
-          scrollWheelZoom={true}
+          scrollWheelZoom={false}
+          doubleClickZoom={false}
+          touchZoom={false}
+          dragging={true}
           attributionControl={false}
           className="w-full h-[calc(100vh-220px)] min-h-[800px]"
         >
@@ -668,17 +644,52 @@ function Map({ selectedPath = "default" }) {
             })}
           />
 
-          {/* SMALL CLICKABLE DESTINATION LOCATION ICON */}
+          {/* ================================================== */}
+          {/* DESTINATION MARKER WITH BUILDING POPUP */}
+          {/* ================================================== */}
 
           {destination && (
             <Marker
               position={[destination.lat, destination.lng]}
               icon={destinationLocationIcon}
               zIndexOffset={1000}
-              eventHandlers={{
-                click: () => setIsModalOpen(true),
-              }}
-            />
+            >
+              <Popup
+                closeButton={true}
+                autoClose={true}
+                closeOnClick={true}
+                closeOnEscapeKey={true}
+                offset={[0, -12]}
+                maxWidth={240}
+                minWidth={200}
+                className="building-location-popup"
+              >
+                <div className="w-[210px] overflow-hidden rounded-lg">
+                  {/* BUILDING IMAGE */}
+
+                  <div className="h-[125px] w-full overflow-hidden rounded-lg bg-gray-100">
+                    <img
+                      src={destination.image}
+                      alt={destination.label}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  {/* BUILDING INFORMATION */}
+
+                  <div className="px-1 pb-1 pt-3">
+                    <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-blue-600">
+                      <span>📍</span>
+                      Campus Location
+                    </div>
+
+                    <h3 className="text-sm font-bold leading-snug text-gray-900">
+                      {destination.label}
+                    </h3>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
           )}
 
           {/* SOLID WALKING ROUTE */}
@@ -742,7 +753,7 @@ function Map({ selectedPath = "default" }) {
         {/* ================================================== */}
 
         {destination && (
-          <div className="absolute bottom-4 left-4 right-4 z-[1000] sm:left-auto sm:right-4 sm:w-[340px]">
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] sm:left-auto sm:right-4 sm:w-[250px]">
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
               <div className="mb-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -760,7 +771,7 @@ function Map({ selectedPath = "default" }) {
                   Calculating pedestrian route...
                 </div>
               ) : route ? (
-                <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-3">
+                <div className="grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
                   <div>
                     <p className="text-xs text-gray-500">Walking Distance</p>
 
@@ -774,14 +785,6 @@ function Map({ selectedPath = "default" }) {
 
                     <p className="mt-1 text-lg font-bold text-gray-900">
                       {formatWalkingTime(route.durationSeconds)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500">Estimated Arrival</p>
-
-                    <p className="mt-1 text-lg font-bold text-gray-900">
-                      {formatArrivalTime(route.durationSeconds)}
                     </p>
                   </div>
                 </div>
@@ -820,75 +823,6 @@ function Map({ selectedPath = "default" }) {
           </div>
         )}
       </div>
-
-      {/* ================================================== */}
-      {/* DESTINATION IMAGE MODAL */}
-      {/* ================================================== */}
-
-      {isModalOpen && destination && (
-        <div
-          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          onClick={() => setIsModalOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="destination-modal-title"
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {/* CLOSE BUTTON */}
-
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              aria-label="Close destination details"
-              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-xl text-white transition hover:bg-black/80"
-            >
-              &times;
-            </button>
-
-            {/* BUILDING IMAGE */}
-
-            <div className="h-64 w-full overflow-hidden bg-gray-100 sm:h-72">
-              <img
-                src={destination.image}
-                alt={destination.label}
-                className="h-full w-full object-cover"
-              />
-            </div>
-
-            {/* BUILDING INFORMATION */}
-
-            <div className="p-6">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-blue-600">
-                <span>📍</span>
-                Campus Location
-              </div>
-
-              <h2
-                id="destination-modal-title"
-                className="text-2xl font-bold text-gray-900"
-              >
-                {destination.label}
-              </h2>
-
-              <p className="mt-2 text-sm leading-relaxed text-gray-500">
-                View information about this campus building and its location on
-                the map.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="mt-6 w-full rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
