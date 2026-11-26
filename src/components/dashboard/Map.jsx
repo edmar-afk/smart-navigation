@@ -1,49 +1,157 @@
-/* eslint-disable no-unused-vars */
-
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import L from "leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Polyline,
+  useMap,
+} from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
 
 // ============================================================
-// MAP CONFIGURATION
+// DESTINATION IMAGES
 // ============================================================
+
+import clinicImage from "../../assets/images/paths/school-clinic.jpg";
+import registrarImage from "../../assets/images/paths/registrar.jpg";
+import libraryImage from "../../assets/images/paths/library.jpg";
+import bitImage from "../../assets/images/paths/bit-program-chair.jpg";
+import cadlabImage from "../../assets/images/paths/bit-program-chair.jpg";
+import canteenImage from "../../assets/images/paths/canteen.jpg";
+import ch3Image from "../../assets/images/paths/ch.jpg";
+import ch4567Image from "../../assets/images/paths/ch.jpg";
+import disasterImage from "../../assets/images/paths/ch.jpg";
+import drawingRoomImage from "../../assets/images/paths/ch.jpg";
+import facultyRoomImage from "../../assets/images/paths/facultyroom.jpg";
+import guidanceImage from "../../assets/images/paths/mis-office.jpg";
+import hrodImage from "../../assets/images/paths/ch.jpg";
+import lab1Image from "../../assets/images/paths/whole.jpg";
+import lab2Image from "../../assets/images/paths/whole.jpg";
+import misImage from "../../assets/images/paths/mis-office.jpg";
+import qaoImage from "../../assets/images/paths/qao.jpg";
+
+// ============================================================
+// DEFAULT MAP LOCATION 7.850736, 123.184834
+// ============================================================
+
 const DEFAULT_LOCATION = {
-  lat: 7.850684,
-  lng: 123.184855,
+  lat: 7.850736,
+  lng: 123.184834,
   name: "Default Location",
 };
 
-const MAP_ZOOM = 18;
-
-const VALHALLA_URL = "https://valhalla1.openstreetmap.de/route";
-
-const SATELLITE_URL =
-  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-
-const LABELS_URL =
-  "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
+// Temporary coordinates.
+// Update these individually when you have the actual locations.
+const TEMP_DESTINATION = {
+  lat: 7.851184,
+  lng: 123.185355,
+};
 
 // ============================================================
-// MAP ICONS
+// CAMPUS DESTINATIONS
 // ============================================================
 
-const createIcon = (color) =>
-  L.divIcon({
-    className: "",
-    html: `<div style="width:22px;height:22px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
-  });
+const CAMPUS_DESTINATIONS = {
+  clinic: {
+    label: "School Clinic",
+    image: clinicImage,
+    ...TEMP_DESTINATION,
+  },
+  registrar: {
+    label: "Registrar",
+    image: registrarImage,
+    ...TEMP_DESTINATION,
+  },
+  library: {
+    label: "Library",
+    image: libraryImage,
+    ...TEMP_DESTINATION,
+  },
+  bit: {
+    label: "BIT Building",
+    image: bitImage,
+    ...TEMP_DESTINATION,
+  },
+  cadlab: {
+    label: "CAD Laboratory",
+    image: cadlabImage,
+    ...TEMP_DESTINATION,
+  },
+  canteen: {
+    label: "Canteen",
+    image: canteenImage,
+    ...TEMP_DESTINATION,
+  },
+  ch3: {
+    label: "CH Building 3",
+    image: ch3Image,
+    ...TEMP_DESTINATION,
+  },
+  ch4567: {
+    label: "CH Buildings 4, 5, 6, and 7",
+    image: ch4567Image,
+    ...TEMP_DESTINATION,
+  },
+  disaster: {
+    label: "Disaster Management Office",
+    image: disasterImage,
+    ...TEMP_DESTINATION,
+  },
+  drawingRoom: {
+    label: "Drawing Room",
+    image: drawingRoomImage,
+    ...TEMP_DESTINATION,
+  },
+  facultyRoom: {
+    label: "Faculty Room",
+    image: facultyRoomImage,
+    ...TEMP_DESTINATION,
+  },
+  guidance: {
+    label: "Guidance Office",
+    image: guidanceImage,
+    ...TEMP_DESTINATION,
+  },
+  hrod: {
+    label: "Human Resource Office",
+    image: hrodImage,
+    ...TEMP_DESTINATION,
+  },
+  lab1: {
+    label: "Laboratory 1",
+    image: lab1Image,
+    ...TEMP_DESTINATION,
+  },
+  lab2: {
+    label: "Laboratory 2",
+    image: lab2Image,
+    ...TEMP_DESTINATION,
+  },
+  mis: {
+    label: "Management Information System",
+    image: misImage,
+    ...TEMP_DESTINATION,
+  },
+  qao: {
+    label: "Quality Assurance Office",
+    image: qaoImage,
+    ...TEMP_DESTINATION,
+  },
+};
 
 // ============================================================
-// POLYLINE6 DECODER
+// POLYLINE 6 DECODER
 // ============================================================
 
-const decodePolyline6 = (encoded) => {
+function decodePolyline6(encoded) {
+  if (!encoded) return [];
+
+  const coordinates = [];
   let index = 0;
   let lat = 0;
   let lng = 0;
-  const coordinates = [];
 
   while (index < encoded.length) {
     let result = 0;
@@ -54,9 +162,10 @@ const decodePolyline6 = (encoded) => {
       byte = encoded.charCodeAt(index++) - 63;
       result |= (byte & 0x1f) << shift;
       shift += 5;
-    } while (byte >= 0x20);
+    } while (byte >= 0x20 && index < encoded.length);
 
     const deltaLat = result & 1 ? ~(result >> 1) : result >> 1;
+
     lat += deltaLat;
 
     result = 0;
@@ -66,388 +175,364 @@ const decodePolyline6 = (encoded) => {
       byte = encoded.charCodeAt(index++) - 63;
       result |= (byte & 0x1f) << shift;
       shift += 5;
-    } while (byte >= 0x20);
+    } while (byte >= 0x20 && index < encoded.length);
 
     const deltaLng = result & 1 ? ~(result >> 1) : result >> 1;
+
     lng += deltaLng;
 
-    coordinates.push([lat / 1e6, lng / 1e6]);
+    coordinates.push([lat / 1000000, lng / 1000000]);
   }
 
   return coordinates;
-};
+}
 
 // ============================================================
-// TIME FORMATTERS
+// DISTANCE CALCULATION
 // ============================================================
 
-const formatArrivalTime = (durationSeconds) => {
-  const arrival = new Date(Date.now() + durationSeconds * 1000);
+function calculateDistance(pointA, pointB) {
+  const earthRadius = 6371000;
+
+  const lat1 = (pointA.lat * Math.PI) / 180;
+  const lat2 = (pointB.lat * Math.PI) / 180;
+
+  const deltaLat = ((pointB.lat - pointA.lat) * Math.PI) / 180;
+  const deltaLng = ((pointB.lng - pointA.lng) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadius * c;
+}
+
+// ============================================================
+// FORMAT WALKING DISTANCE
+// ============================================================
+
+function formatDistance(distanceKm) {
+  if (distanceKm < 1) {
+    return `${Math.round(distanceKm * 1000)} m`;
+  }
+
+  return `${distanceKm.toFixed(2)} km`;
+}
+
+// ============================================================
+// FORMAT WALKING TIME
+// ============================================================
+
+function formatWalkingTime(seconds) {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (remainingMinutes === 0) {
+    return `${hours} hr`;
+  }
+
+  return `${hours} hr ${remainingMinutes} min`;
+}
+
+// ============================================================
+// FORMAT ARRIVAL TIME
+// ============================================================
+
+function formatArrivalTime(seconds) {
+  const arrival = new Date(Date.now() + seconds * 1000);
 
   return arrival.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
-};
-
-const formatDuration = (seconds) => {
-  const totalMinutes = Math.ceil(seconds / 60);
-
-  if (totalMinutes < 60) {
-    return `${totalMinutes} min`;
-  }
-
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  return minutes > 0 ? `${hours} hr ${minutes} min` : `${hours} hr`;
-};
+}
 
 // ============================================================
-// MAP COMPONENT
+// SMALL LOCATION MARKER ICON
 // ============================================================
 
-function Map({ selectedPath = "default" }) {
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
+const destinationLocationIcon = L.divIcon({
+  className: "destination-location-marker",
+  html: `
+    <div style="
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2563eb;
+      border: 3px solid white;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+    ">
+      <div style="
+        width: 10px;
+        height: 10px;
+        background: white;
+        border-radius: 50%;
+      "></div>
+    </div>
+  `,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+});
 
-  const routeLayerRef = useRef(null);
-  const destinationMarkerRef = useRef(null);
-  const startMarkerRef = useRef(null);
+// ============================================================
+// MAP INSTANCE CONTROLLER
+// ============================================================
 
-  const activeStartRef = useRef(DEFAULT_LOCATION);
-  const requestIdRef = useRef(0);
-
-  const [routeInfo, setRouteInfo] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const [startMode, setStartMode] = useState("default");
-  const [startLabel, setStartLabel] = useState("Default Location");
-
-  // ==========================================================
-  // CLEAR ROUTE
-  // ==========================================================
-
-  const clearRoute = () => {
-    const map = mapRef.current;
-
-    requestIdRef.current++;
-
-    if (map && routeLayerRef.current) {
-      map.removeLayer(routeLayerRef.current);
-      routeLayerRef.current = null;
-    }
-
-    if (map && destinationMarkerRef.current) {
-      map.removeLayer(destinationMarkerRef.current);
-      destinationMarkerRef.current = null;
-    }
-
-    setRouteInfo(null);
-    setLoading(false);
-    setError("");
-  };
-
-  // ==========================================================
-  // UPDATE STARTING LOCATION
-  // ==========================================================
-
-  const updateStartingLocation = (location, mode, label) => {
-    const map = mapRef.current;
-
-    if (!map) return;
-
-    clearRoute();
-
-    activeStartRef.current = location;
-
-    setStartMode(mode);
-    setStartLabel(label);
-
-    if (startMarkerRef.current) {
-      startMarkerRef.current.setLatLng([location.lat, location.lng]);
-
-      startMarkerRef.current.bindPopup(
-        `<strong>${label}</strong><br/>Starting Location`,
-      );
-    }
-
-    map.setView([location.lat, location.lng], MAP_ZOOM, { animate: false });
-  };
-
-  // ==========================================================
-  // INITIALIZE MAP
-  // ==========================================================
+function MapInstanceController({ onMapReady }) {
+  const map = useMap();
 
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    onMapReady(map);
+  }, [map, onMapReady]);
 
-    const map = L.map(mapContainerRef.current, {
-      center: [DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng],
-      zoom: MAP_ZOOM,
-      minZoom: MAP_ZOOM,
-      maxZoom: MAP_ZOOM,
-      zoomControl: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      touchZoom: false,
-      boxZoom: false,
-      keyboard: false,
+  return null;
+}
 
-      tap: false,
-    });
+// ============================================================
+// MAP CONTROLLER
+// Handles routing and map movement.
+// ============================================================
 
-    mapRef.current = map;
+function MapController({
+  selectedPath,
+  startLocation,
+  onRouteUpdate,
+  onRouteLoading,
+  onRouteError,
+}) {
+  const map = useMap();
 
-    // ========================================================
-    // SATELLITE IMAGERY
-    // ========================================================
+  useEffect(() => {
+    if (selectedPath === "default") {
+      onRouteUpdate(null);
+      onRouteLoading(false);
+      onRouteError("");
 
-    L.tileLayer(SATELLITE_URL, {
-      attribution:
-        "Tiles &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-      maxZoom: 19,
-    }).addTo(map);
+      map.flyTo([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], 18, {
+        duration: 1,
+      });
 
-    // ========================================================
-    // ROAD LABELS
-    // ========================================================
+      return;
+    }
 
-    L.tileLayer(LABELS_URL, {
-      attribution: "Esri",
-      maxZoom: 19,
-      opacity: 0.9,
-    }).addTo(map);
+    const destination = CAMPUS_DESTINATIONS[selectedPath];
 
-    // ========================================================
-    // DEFAULT STARTING MARKER
-    // ========================================================
+    if (!destination) {
+      onRouteUpdate(null);
+      onRouteLoading(false);
+      onRouteError("");
+      return;
+    }
 
-    const startMarker = L.marker([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], {
-      icon: createIcon("#2563eb"),
-    }).addTo(map);
+    let cancelled = false;
+    const controller = new AbortController();
 
-    startMarker
-      .bindPopup(
-        `<strong>${DEFAULT_LOCATION.name}</strong><br/>Starting Location`,
-      )
-      .openPopup();
+    async function getWalkingRoute() {
+      onRouteLoading(true);
+      onRouteError("");
+      onRouteUpdate(null);
 
-    startMarkerRef.current = startMarker;
-
-    // ========================================================
-    // DESTINATION SELECTION AND WALKING ROUTE
-    // ========================================================
-
-    const handleMapClick = async (event) => {
-      const destination = event.latlng;
-      const startLocation = activeStartRef.current;
-      const currentRequestId = ++requestIdRef.current;
-
-      setLoading(true);
-      setError("");
-      setRouteInfo(null);
-
-      // Remove previous route
-
-      if (routeLayerRef.current) {
-        map.removeLayer(routeLayerRef.current);
-        routeLayerRef.current = null;
-      }
-
-      // Remove previous destination
-
-      if (destinationMarkerRef.current) {
-        map.removeLayer(destinationMarkerRef.current);
-        destinationMarkerRef.current = null;
-      }
-
-      // Add destination marker
-
-      const destinationMarker = L.marker([destination.lat, destination.lng], {
-        icon: createIcon("#dc2626"),
-      }).addTo(map);
-
-      destinationMarker
-        .bindPopup(
-          `<strong>Destination</strong><br/>Latitude: ${destination.lat.toFixed(6)}<br/>Longitude: ${destination.lng.toFixed(6)}`,
-        )
-        .openPopup();
-
-      destinationMarkerRef.current = destinationMarker;
-
-      // ======================================================
-      // VALHALLA WALKING ROUTING
-      // ======================================================
+      const requestBody = {
+        locations: [
+          {
+            lat: startLocation.lat,
+            lon: startLocation.lng,
+          },
+          {
+            lat: destination.lat,
+            lon: destination.lng,
+          },
+        ],
+        costing: "pedestrian",
+        units: "kilometers",
+        shape_format: "polyline6",
+      };
 
       try {
-        const requestBody = {
-          locations: [
-            {
-              lat: startLocation.lat,
-              lon: startLocation.lng,
-            },
-            {
-              lat: destination.lat,
-              lon: destination.lng,
-            },
-          ],
-          costing: "pedestrian",
-          units: "km",
-          shape_format: "polyline6",
-        };
+        const url =
+          "https://valhalla1.openstreetmap.de/route?json=" +
+          encodeURIComponent(JSON.stringify(requestBody));
 
-        const response = await fetch(VALHALLA_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
+        const response = await fetch(url, {
+          signal: controller.signal,
         });
 
         if (!response.ok) {
-          throw new Error(
-            "Unable to calculate walking directions. Please try again.",
-          );
+          throw new Error("Unable to retrieve the walking route.");
         }
 
         const data = await response.json();
 
-        // Ignore outdated requests
-
-        if (currentRequestId !== requestIdRef.current) return;
-
         if (!data.trip || !data.trip.legs || !data.trip.legs.length) {
-          throw new Error("No available walking route to this destination.");
+          throw new Error("No walking route was found.");
         }
 
+        const leg = data.trip.legs[0];
         const summary = data.trip.summary;
-        const encodedShape = data.trip.legs[0].shape;
 
-        if (!summary || !encodedShape || typeof encodedShape !== "string") {
-          throw new Error("The walking route response was incomplete.");
+        const routeCoordinates = decodePolyline6(leg.shape);
+
+        if (!routeCoordinates.length) {
+          throw new Error("The walking route is unavailable.");
         }
 
-        // Decode route coordinates
+        if (cancelled) return;
 
-        const coordinates = decodePolyline6(encodedShape);
+        const newRoute = {
+          coordinates: routeCoordinates,
+          distanceKm: summary.length,
+          durationSeconds: summary.time,
+          destination: {
+            lat: destination.lat,
+            lng: destination.lng,
+          },
+        };
 
-        if (!coordinates.length) {
-          throw new Error("Unable to display the walking route.");
-        }
+        onRouteUpdate(newRoute);
 
-        // Draw walking route
+        const bounds = L.latLngBounds(routeCoordinates);
+        bounds.extend([destination.lat, destination.lng]);
 
-        const routeLayer = L.polyline(coordinates, {
-          color: "#2563eb",
-          weight: 6,
-          opacity: 0.9,
-          lineCap: "round",
-          lineJoin: "round",
-        }).addTo(map);
-
-        routeLayerRef.current = routeLayer;
-
-        // Keep map fixed at its current zoom and center
-
-        const distance = Number(summary.length);
-        const duration = Number(summary.time);
-
-        if (!Number.isFinite(distance) || !Number.isFinite(duration)) {
-          throw new Error(
-            "Unable to calculate walking distance or arrival time.",
-          );
-        }
-
-        // Show route information inside the map
-
-        setRouteInfo({
-          distance: distance.toFixed(2),
-          durationText: formatDuration(duration),
-          arrival: formatArrivalTime(duration),
+        map.fitBounds(bounds, {
+          padding: [80, 80],
+          maxZoom: 19,
+          animate: true,
         });
-      } catch (err) {
-        if (currentRequestId === requestIdRef.current) {
-          setError(err.message || "Walking route calculation failed.");
-        }
+      } catch (error) {
+        if (error.name === "AbortError" || cancelled) return;
+
+        console.error("Walking route error:", error);
+
+        onRouteError(error.message || "Unable to load walking route.");
       } finally {
-        if (currentRequestId === requestIdRef.current) {
-          setLoading(false);
+        if (!cancelled) {
+          onRouteLoading(false);
         }
+      }
+    }
+
+    getWalkingRoute();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [
+    selectedPath,
+    startLocation,
+    map,
+    onRouteUpdate,
+    onRouteLoading,
+    onRouteError,
+  ]);
+
+  return null;
+}
+
+// ============================================================
+// MAIN MAP COMPONENT
+// ============================================================
+
+function Map({ selectedPath = "default" }) {
+  const [startLocation, setStartLocation] = useState(DEFAULT_LOCATION);
+
+  const [route, setRoute] = useState(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [routeError, setRouteError] = useState("");
+
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState("");
+
+  const [mapInstance, setMapInstance] = useState(null);
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const destination = useMemo(() => {
+    if (selectedPath === "default") return null;
+
+    return CAMPUS_DESTINATIONS[selectedPath] || null;
+  }, [selectedPath]);
+
+  // Close modal when the selected sidebar destination changes.
+  useEffect(() => {
+    setIsModalOpen(false);
+  }, [selectedPath]);
+
+  // Close modal using Escape key.
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsModalOpen(false);
       }
     };
 
-    map.on("click", handleMapClick);
-
-    // Fix Leaflet dimensions
-
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-
-    // ========================================================
-    // CLEANUP
-    // ========================================================
+    window.addEventListener("keydown", handleEscape);
 
     return () => {
-      requestIdRef.current++;
-
-      map.off("click", handleMapClick);
-      map.remove();
-
-      mapRef.current = null;
-      routeLayerRef.current = null;
-      destinationMarkerRef.current = null;
-      startMarkerRef.current = null;
+      window.removeEventListener("keydown", handleEscape);
     };
-  }, []);
+  }, [isModalOpen]);
 
-  // ==========================================================
-  // MY CURRENT LOCATION
-  // ==========================================================
+  // ----------------------------------------------------------
+  // CURRENT LOCATION
+  // ----------------------------------------------------------
 
-  const useCurrentLocation = () => {
+  const handleMyLocation = () => {
     if (!navigator.geolocation) {
-      setError("Your browser does not support location services.");
+      setLocationError("Geolocation is not supported by this browser.");
       return;
     }
 
     setLocationLoading(true);
-    setError("");
+    setLocationError("");
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const currentLocation = {
+        const newLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-          name: "My Current Location",
+          name: "My Location",
         };
 
-        updateStartingLocation(
-          currentLocation,
-          "current",
-          "My Current Location",
-        );
-
+        setStartLocation(newLocation);
         setLocationLoading(false);
+
+        if (mapInstance) {
+          mapInstance.flyTo([newLocation.lat, newLocation.lng], 19, {
+            duration: 1,
+          });
+        }
       },
-      (err) => {
+      (error) => {
+        setLocationLoading(false);
+
         let message = "Unable to get your current location.";
 
-        if (err.code === 1) {
+        if (error.code === error.PERMISSION_DENIED) {
           message =
-            "Location permission denied. Please allow location access in your browser.";
-        } else if (err.code === 2) {
-          message =
-            "Your current location is unavailable. Please check your device GPS.";
-        } else if (err.code === 3) {
+            "Location permission was denied. Please enable location access.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Your current location is unavailable.";
+        } else if (error.code === error.TIMEOUT) {
           message = "Location request timed out. Please try again.";
         }
 
-        setError(message);
-        setLocationLoading(false);
+        setLocationError(message);
       },
       {
         enableHighAccuracy: true,
@@ -457,146 +542,353 @@ function Map({ selectedPath = "default" }) {
     );
   };
 
-  // ==========================================================
-  // RETURN TO DEFAULT LOCATION
-  // ==========================================================
+  // ----------------------------------------------------------
+  // DEFAULT LOCATION
+  // ----------------------------------------------------------
 
-  const useDefaultLocation = () => {
-    updateStartingLocation(DEFAULT_LOCATION, "default", DEFAULT_LOCATION.name);
+  const handleDefaultLocation = () => {
+    setStartLocation(DEFAULT_LOCATION);
+    setLocationError("");
+
+    if (mapInstance) {
+      mapInstance.flyTo([DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng], 18, {
+        duration: 1,
+      });
+    }
   };
 
-  // ==========================================================
-  // RESET MAP
-  // ==========================================================
+  // ----------------------------------------------------------
+  // MAP CALLBACKS
+  // ----------------------------------------------------------
 
-  const resetMap = () => {
-    useDefaultLocation();
-  };
+  const handleMapReady = React.useCallback((map) => {
+    setMapInstance(map);
+  }, []);
 
-  // ==========================================================
-  // RENDER
-  // ==========================================================
+  // ----------------------------------------------------------
+  // ROUTE CALLBACKS
+  // ----------------------------------------------------------
+
+  const handleRouteUpdate = React.useCallback((newRoute) => {
+    setRoute(newRoute);
+  }, []);
+
+  const handleRouteLoading = React.useCallback((loading) => {
+    setRouteLoading(loading);
+  }, []);
+
+  const handleRouteError = React.useCallback((message) => {
+    setRouteError(message);
+  }, []);
+
+  // ----------------------------------------------------------
+  // DOTTED FALLBACK LINE
+  // ----------------------------------------------------------
+
+  const connectorCoordinates = useMemo(() => {
+    if (!route || !route.coordinates.length) return null;
+
+    const lastCoordinate = route.coordinates[route.coordinates.length - 1];
+
+    const distance = calculateDistance(
+      {
+        lat: lastCoordinate[0],
+        lng: lastCoordinate[1],
+      },
+      route.destination,
+    );
+
+    if (distance <= 10) return null;
+
+    return [lastCoordinate, [route.destination.lat, route.destination.lng]];
+  }, [route]);
 
   return (
-    <div className="w-full relative space-y-4">
-      {/* HEADER */}
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-gray-800">
-            Satellite Location Map
-          </h2>
-          <p className="text-xs text-gray-500">
-            Click anywhere on the map to select a walking destination.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={resetMap}
-          className="px-4 py-2 text-sm font-medium bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition"
-        >
-          Reset Map
-        </button>
-      </div>
-
-      {/* LOCATION SWITCHING */}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={useCurrentLocation}
-          disabled={locationLoading}
-          className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${startMode === "current" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"} disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {locationLoading ? "Getting Location..." : "My Location"}
-        </button>
-
-        <button
-          type="button"
-          onClick={useDefaultLocation}
-          disabled={locationLoading}
-          className={`px-4 py-2 rounded-lg text-sm font-medium border transition ${startMode === "default" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"} disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          Default Location
-        </button>
-      </div>
-
-      {/* ACTIVE STARTING LOCATION */}
-
-      <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-        <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" />
-        <div>
-          <p className="text-xs text-gray-500">Route Starting Point</p>
-          <p className="text-sm font-semibold text-blue-800">{startLabel}</p>
-        </div>
-      </div>
-
+    <div className="relative w-full">
+      {/* ================================================== */}
       {/* MAP CONTAINER */}
+      {/* ================================================== */}
 
-      <div className="relative w-full h-[500px] rounded-xl overflow-hidden border border-gray-200 shadow-sm z-0">
-        <div ref={mapContainerRef} className="w-full h-full" />
+      <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 shadow-lg">
+        <MapContainer
+          center={[DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng]}
+          zoom={18}
+          zoomControl={false}
+          scrollWheelZoom={true}
+          attributionControl={false}
+          className="w-full h-[calc(100vh-220px)] min-h-[800px]"
+        >
+          <MapInstanceController onMapReady={handleMapReady} />
 
-        {/* LOADING INDICATOR */}
+          {/* SATELLITE IMAGERY */}
 
-        {loading && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-white px-4 py-2 rounded-lg shadow-md text-sm font-medium text-blue-600 whitespace-nowrap">
-            Calculating walking route...
-          </div>
-        )}
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution="Tiles &copy; Esri"
+            maxZoom={20}
+          />
 
-        {/* ROUTE INFORMATION OVERLAY */}
+          {/* LABELS OVER SATELLITE MAP */}
 
-        {routeInfo && !loading && (
-          <div className="absolute bottom-3 left-3 right-3 z-[1000] pointer-events-auto w-fit">
-            <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-200 p-4">
-              <div className="grid grid-cols-1 gap-3">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Walking Distance</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {routeInfo.distance} km
-                  </p>
-                </div>
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution="Labels &copy; Esri"
+            maxZoom={20}
+            pane="overlayPane"
+          />
 
+          {/* ROUTING CONTROLLER */}
+
+          <MapController
+            selectedPath={selectedPath}
+            startLocation={startLocation}
+            onRouteUpdate={handleRouteUpdate}
+            onRouteLoading={handleRouteLoading}
+            onRouteError={handleRouteError}
+          />
+
+          {/* CURRENT STARTING LOCATION */}
+
+          <Marker
+            position={[startLocation.lat, startLocation.lng]}
+            icon={L.divIcon({
+              className: "current-location-marker",
+              html: `
+                <div style="
+                  width: 18px;
+                  height: 18px;
+                  background: #2563eb;
+                  border: 4px solid white;
+                  border-radius: 50%;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+                "></div>
+              `,
+              iconSize: [18, 18],
+              iconAnchor: [9, 9],
+            })}
+          />
+
+          {/* SMALL CLICKABLE DESTINATION LOCATION ICON */}
+
+          {destination && (
+            <Marker
+              position={[destination.lat, destination.lng]}
+              icon={destinationLocationIcon}
+              zIndexOffset={1000}
+              eventHandlers={{
+                click: () => setIsModalOpen(true),
+              }}
+            />
+          )}
+
+          {/* SOLID WALKING ROUTE */}
+
+          {route && route.coordinates.length > 0 && (
+            <Polyline
+              positions={route.coordinates}
+              pathOptions={{
+                color: "#2563eb",
+                weight: 6,
+                opacity: 0.9,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />
+          )}
+
+          {/* DOTTED ROUTE ENDPOINT CONNECTION */}
+
+          {connectorCoordinates && (
+            <Polyline
+              positions={connectorCoordinates}
+              pathOptions={{
+                color: "#2563eb",
+                weight: 4,
+                opacity: 0.9,
+                dashArray: "2, 10",
+                lineCap: "round",
+              }}
+            />
+          )}
+        </MapContainer>
+
+        {/* ================================================== */}
+        {/* MAP CONTROLS */}
+        {/* ================================================== */}
+
+        <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={handleMyLocation}
+            disabled={locationLoading}
+            className="flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="text-lg">📍</span>
+            {locationLoading ? "Locating..." : "My Location"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDefaultLocation}
+            className="flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition hover:bg-gray-100"
+          >
+            <span className="text-lg">🏠</span>
+            Default Location
+          </button>
+        </div>
+
+        {/* ================================================== */}
+        {/* WALKING ROUTE INFORMATION */}
+        {/* ================================================== */}
+
+        {destination && (
+          <div className="absolute bottom-4 left-4 right-4 z-[1000] sm:left-auto sm:right-4 sm:w-[340px]">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-xl">
+              <div className="mb-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Selected Destination
+                </p>
+
+                <h3 className="mt-1 text-base font-bold text-gray-900">
+                  {destination.label}
+                </h3>
               </div>
+
+              {routeLoading ? (
+                <div className="flex items-center gap-3 py-3 text-sm text-gray-600">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                  Calculating pedestrian route...
+                </div>
+              ) : route ? (
+                <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-3">
+                  <div>
+                    <p className="text-xs text-gray-500">Walking Distance</p>
+
+                    <p className="mt-1 text-lg font-bold text-gray-900">
+                      {formatDistance(route.distanceKm)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Walking Time</p>
+
+                    <p className="mt-1 text-lg font-bold text-gray-900">
+                      {formatWalkingTime(route.durationSeconds)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Estimated Arrival</p>
+
+                    <p className="mt-1 text-lg font-bold text-gray-900">
+                      {formatArrivalTime(route.durationSeconds)}
+                    </p>
+                  </div>
+                </div>
+              ) : routeError ? (
+                <p className="border-t border-gray-100 pt-3 text-sm text-red-600">
+                  {routeError}
+                </p>
+              ) : (
+                <p className="border-t border-gray-100 pt-3 text-sm text-gray-500">
+                  Waiting for walking route information...
+                </p>
+              )}
+
+              <p className="mt-3 text-xs text-gray-400">
+                Based on the estimated pedestrian route duration.
+              </p>
             </div>
           </div>
         )}
+
+        {/* ================================================== */}
+        {/* LOCATION ERROR */}
+        {/* ================================================== */}
+
+        {locationError && (
+          <div className="absolute bottom-4 left-4 z-[1100] max-w-xs rounded-lg bg-red-600 px-4 py-3 text-sm text-white shadow-lg">
+            {locationError}
+
+            <button
+              type="button"
+              onClick={() => setLocationError("")}
+              className="ml-3 font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ERROR MESSAGE */}
+      {/* ================================================== */}
+      {/* DESTINATION IMAGE MODAL */}
+      {/* ================================================== */}
 
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-          {error}
+      {isModalOpen && destination && (
+        <div
+          className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="destination-modal-title"
+            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {/* CLOSE BUTTON */}
+
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              aria-label="Close destination details"
+              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-xl text-white transition hover:bg-black/80"
+            >
+              &times;
+            </button>
+
+            {/* BUILDING IMAGE */}
+
+            <div className="h-64 w-full overflow-hidden bg-gray-100 sm:h-72">
+              <img
+                src={destination.image}
+                alt={destination.label}
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            {/* BUILDING INFORMATION */}
+
+            <div className="p-6">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-blue-600">
+                <span>📍</span>
+                Campus Location
+              </div>
+
+              <h2
+                id="destination-modal-title"
+                className="text-2xl font-bold text-gray-900"
+              >
+                {destination.label}
+              </h2>
+
+              <p className="mt-2 text-sm leading-relaxed text-gray-500">
+                View information about this campus building and its location on
+                the map.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="mt-6 w-full rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      {/* MAP LEGEND */}
-
-      <div className="flex flex-wrap items-center gap-5 text-xs text-gray-600">
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-blue-600" />
-          Starting Location
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-red-600" />
-          Destination
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="w-6 h-1 rounded bg-blue-600" />
-          Walking Route
-        </div>
-      </div>
-
-      {/* COORDINATES */}
-
-      <p className="text-xs text-gray-400">
-        Starting coordinates: {activeStartRef.current.lat.toFixed(6)},{" "}
-        {activeStartRef.current.lng.toFixed(6)}
-      </p>
     </div>
   );
 }

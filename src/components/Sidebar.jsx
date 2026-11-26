@@ -28,7 +28,7 @@ const navSections = [
     icon: MapRoundedIcon,
     type: "map",
     items: [
-      { label: "Full Map", mapPath: "default" },
+      { label: "Full Map", mapPath: "default", lat: '', lng: '' },
       { label: "Clinic Path", mapPath: "clinic" },
       { label: "Registrar Path", mapPath: "registrar" },
       { label: "Library Path", mapPath: "library" },

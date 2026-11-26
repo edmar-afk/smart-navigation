@@ -22,7 +22,6 @@ function Dashboard() {
 
         <Map
           selectedPath={selectedMap}
-          onSelectPath={setSelectedMap}
         />
       </div>
     </>
