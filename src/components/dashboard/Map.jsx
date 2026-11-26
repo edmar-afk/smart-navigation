@@ -7,10 +7,9 @@ import "leaflet/dist/leaflet.css";
 // ============================================================
 // MAP CONFIGURATION
 // ============================================================
-
 const DEFAULT_LOCATION = {
-  lat: 7.850005,
-  lng: 123.185847,
+  lat: 7.850684,
+  lng: 123.184855,
   name: "Default Location",
 };
 
@@ -549,9 +548,9 @@ function Map({ selectedPath = "default" }) {
         {/* ROUTE INFORMATION OVERLAY */}
 
         {routeInfo && !loading && (
-          <div className="absolute bottom-3 left-3 right-3 z-[1000] pointer-events-auto w-72 lg:w-96">
+          <div className="absolute bottom-3 left-3 right-3 z-[1000] pointer-events-auto w-fit">
             <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-200 p-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-500 mb-1">Walking Distance</p>
                   <p className="text-xl font-bold text-gray-900">
@@ -559,28 +558,7 @@ function Map({ selectedPath = "default" }) {
                   </p>
                 </div>
 
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">
-                    Est. Walking Time
-                  </p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {routeInfo.durationText}
-                  </p>
-                </div>
               </div>
-
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                <p className="text-xs text-blue-600 font-medium">
-                  Estimated Arrival Time
-                </p>
-                <p className="text-2xl font-bold text-blue-800">
-                  {routeInfo.arrival}
-                </p>
-              </div>
-
-              <p className="text-[11px] text-gray-400 mt-3">
-                Based on the estimated pedestrian route duration.
-              </p>
             </div>
           </div>
         )}
