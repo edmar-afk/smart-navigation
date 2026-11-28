@@ -650,7 +650,10 @@ function Map({ selectedPath = "default" }) {
   const [locationError, setLocationError] = useState("");
 
   const [mapInstance, setMapInstance] = useState(null);
+  const [isTrackingLocation, setIsTrackingLocation] = useState(false);
 
+  const watchIdRef = useRef(null);
+  const lastLocationUpdateRef = useRef(0);
   // ----------------------------------------------------------
   // SELECTED DESTINATION
   // ----------------------------------------------------------
@@ -682,11 +685,31 @@ function Map({ selectedPath = "default" }) {
       return;
     }
 
+    // Stop previous tracking if already active.
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
     setLocationLoading(true);
     setLocationError("");
+    lastLocationUpdateRef.current = 0;
 
-    navigator.geolocation.getCurrentPosition(
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
+        const now = Date.now();
+
+        // Update immediately on first position,
+        // then approximately every 3 seconds.
+        if (
+          lastLocationUpdateRef.current !== 0 &&
+          now - lastLocationUpdateRef.current < 3000
+        ) {
+          return;
+        }
+
+        lastLocationUpdateRef.current = now;
+
         const newLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -695,10 +718,14 @@ function Map({ selectedPath = "default" }) {
 
         setStartLocation(newLocation);
         setLocationLoading(false);
+        setIsTrackingLocation(true);
+        setLocationError("");
 
+        // Keep the map centered on the moving user.
         if (mapInstance) {
-          mapInstance.flyTo([newLocation.lat, newLocation.lng], 18, {
-            duration: 1,
+          mapInstance.panTo([newLocation.lat, newLocation.lng], {
+            animate: true,
+            duration: 0.5,
           });
         }
       },
@@ -708,15 +735,15 @@ function Map({ selectedPath = "default" }) {
         let message = "Unable to get your current location.";
 
         if (error.code === error.PERMISSION_DENIED) {
-          message =
-            "Location permission was denied. Please enable location access.";
+          message = "Location permission was denied.";
         } else if (error.code === error.POSITION_UNAVAILABLE) {
           message = "Your current location is unavailable.";
         } else if (error.code === error.TIMEOUT) {
-          message = "Location request timed out. Please try again.";
+          message = "Location request timed out.";
         }
 
         setLocationError(message);
+        setIsTrackingLocation(false);
       },
       {
         enableHighAccuracy: true,
@@ -726,11 +753,22 @@ function Map({ selectedPath = "default" }) {
     );
   };
 
+  const handleStopTracking = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
+    setIsTrackingLocation(false);
+  };
+
   // ----------------------------------------------------------
   // DEFAULT LOCATION
   // ----------------------------------------------------------
 
   const handleDefaultLocation = () => {
+    handleStopTracking();
+
     setStartLocation(DEFAULT_LOCATION);
     setCustomDestination(null);
     setLocationError("");
@@ -800,6 +838,13 @@ function Map({ selectedPath = "default" }) {
     return [lastCoordinate, [route.destination.lat, route.destination.lng]];
   }, [route]);
 
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, []);
   // ==========================================================
   // RENDER
   // ==========================================================
@@ -954,16 +999,29 @@ function Map({ selectedPath = "default" }) {
         {/* MAP CONTROLS */}
         {/* ================================================== */}
 
+        {/* ================================================== */}
+        {/* MAP CONTROLS */}
+        {/* ================================================== */}
+
         <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+          {/* MY LOCATION / GPS TRACKING */}
+
           <button
             type="button"
-            onClick={handleMyLocation}
+            onClick={isTrackingLocation ? handleStopTracking : handleMyLocation}
             disabled={locationLoading}
             className="flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-md transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <span className="text-lg">📍</span>
-            {locationLoading ? "Locating..." : "My Location"}
+            <span className="text-lg">{isTrackingLocation ? "🟢" : "📍"}</span>
+
+            {locationLoading
+              ? "Locating..."
+              : isTrackingLocation
+                ? "Stop Tracking"
+                : "My Location"}
           </button>
+
+          {/* DEFAULT LOCATION */}
 
           <button
             type="button"
